@@ -9,14 +9,14 @@ import {
   Cpu, ChevronDown, Layers, Search, Eye, Image as ImageIcon, Volume2, Maximize2, 
   RefreshCw, FileDown, Wand2, AlertTriangle, Rocket, FlaskConical, Palette, 
   TrendingUp, Fingerprint, Globe, Microscope, Shield, Binary, Code, Heart, Activity,
-  Share2, Link, ShieldAlert, Headphones, Play, Square, Bot, ChevronRight, UserCircle2,
-  ShieldCheck, Bookmark
+  Share2, Link, ShieldAlert, Headphones, Play, Pause, Square, Bot, ChevronRight, UserCircle2,
+  ShieldCheck, Bookmark, Gauge
 } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { jsPDF } from 'jspdf';
 
-type AudioStatus = 'IDLE' | 'LOADING' | 'PLAYING';
+type AudioStatus = 'IDLE' | 'LOADING' | 'PLAYING' | 'PAUSED';
 
 const AudioVisualizer = () => (
   <div className="flex items-end gap-[2px] h-3 w-4">
@@ -118,6 +118,8 @@ const LANGUAGES = [
   { name: 'French', code: 'fr' },
 ];
 
+const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2];
+
 const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRequireAuth, externalMode, onModeChange }) => {
   const [localMode, setLocalMode] = useState<'SCENARIO' | 'BEYOU'>('SCENARIO');
   const mode = externalMode !== undefined ? externalMode : localMode;
@@ -132,7 +134,15 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ScenarioResponse | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  
+  // Enhanced Audio State
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('IDLE');
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioVolume, setAudioVolume] = useState(1);
+  const [audioSpeed, setAudioSpeed] = useState(1);
+  const [showAudioControls, setShowAudioControls] = useState(false);
+
   const [beYouStep, setBeYouStep] = useState<'DETAILS' | 'ASSESSMENT' | 'GENERATING' | 'RESULT'>('DETAILS');
   const [userDetails, setUserDetails] = useState<BeYouUserDetails>({ name: '', age: '', grade: '', goal: '', timeframe: '' });
   const [assessmentQuestions, setAssessmentQuestions] = useState<string[]>([]);
@@ -150,8 +160,15 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
   const resultRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  
+  // Audio Playback Refs
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const offsetRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (currentUser?.beYouSession) {
@@ -161,15 +178,31 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
         setChatHistory(s.history);
         setBeYouStep('RESULT');
     }
-    return () => stopAudio();
+    return () => {
+      stopAudio();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [currentUser]);
 
   useEffect(() => {
     if (audioStatus === 'PLAYING') {
+      // Reload speech if language changes
       stopAudio();
-      if (mode === 'SCENARIO') handleSpeakMission();
+      handleSpeakMission();
     }
   }, [selectedLanguage]);
+
+  useEffect(() => {
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.setTargetAtTime(audioVolume, audioCtxRef.current?.currentTime || 0, 0.05);
+    }
+  }, [audioVolume]);
+
+  useEffect(() => {
+    if (audioSourceRef.current) {
+      audioSourceRef.current.playbackRate.setTargetAtTime(audioSpeed, audioCtxRef.current?.currentTime || 0, 0.05);
+    }
+  }, [audioSpeed]);
 
   useEffect(() => {
       if (data && titleRef.current) {
@@ -187,12 +220,84 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
     }
   }, [chatHistory, activeTab]);
 
+  const updateAudioProgress = () => {
+    if (audioStatus === 'PLAYING' && audioCtxRef.current) {
+      const elapsed = (audioCtxRef.current.currentTime - startTimeRef.current) * audioSpeed;
+      const current = offsetRef.current + elapsed;
+      setAudioCurrentTime(current);
+      if (current >= audioDuration) {
+        setAudioStatus('IDLE');
+        offsetRef.current = 0;
+        setAudioCurrentTime(0);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        return;
+      }
+    }
+    rafRef.current = requestAnimationFrame(updateAudioProgress);
+  };
+
+  const startAudioNode = (offset: number) => {
+    if (!audioBufferRef.current || !audioCtxRef.current) return;
+    
+    // Stop existing
+    if (audioSourceRef.current) {
+      try { audioSourceRef.current.stop(); } catch(e){}
+    }
+
+    const source = audioCtxRef.current.createBufferSource();
+    source.buffer = audioBufferRef.current;
+    source.playbackRate.value = audioSpeed;
+
+    if (!gainNodeRef.current) {
+      gainNodeRef.current = audioCtxRef.current.createGain();
+      gainNodeRef.current.gain.value = audioVolume;
+      gainNodeRef.current.connect(audioCtxRef.current.destination);
+    }
+
+    source.connect(gainNodeRef.current);
+    source.start(0, offset);
+    
+    audioSourceRef.current = source;
+    offsetRef.current = offset;
+    startTimeRef.current = audioCtxRef.current.currentTime;
+    setAudioStatus('PLAYING');
+    
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(updateAudioProgress);
+  };
+
   const stopAudio = () => {
     if (audioSourceRef.current) {
         try { audioSourceRef.current.stop(); } catch(e){}
         audioSourceRef.current = null;
     }
     setAudioStatus('IDLE');
+    offsetRef.current = 0;
+    setAudioCurrentTime(0);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  };
+
+  const togglePauseResume = () => {
+    if (audioStatus === 'PLAYING') {
+      if (audioSourceRef.current) {
+        try { audioSourceRef.current.stop(); } catch(e){}
+      }
+      // Store accurate offset
+      const elapsed = (audioCtxRef.current!.currentTime - startTimeRef.current) * audioSpeed;
+      offsetRef.current = offsetRef.current + elapsed;
+      setAudioStatus('PAUSED');
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    } else if (audioStatus === 'PAUSED') {
+      startAudioNode(offsetRef.current);
+    }
+  };
+
+  const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newOffset = parseFloat(e.target.value);
+    setAudioCurrentTime(newOffset);
+    if (audioStatus === 'PLAYING' || audioStatus === 'PAUSED') {
+      startAudioNode(newOffset);
+    }
   };
 
   const handleBookmark = () => {
@@ -326,19 +431,29 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
 
   const handleSpeakMission = async () => {
     if (!data) return;
-    if (audioStatus === 'PLAYING') { stopAudio(); return; }
+    if (audioStatus === 'PLAYING' || audioStatus === 'PAUSED') { stopAudio(); return; }
+    
     setAudioStatus('LOADING');
     try {
       const missionText = `Mission Briefing. Role: ${data.role}. Explanation: ${data.explanation}. AI View: ${data.scenario}. Steps: ${data.steps.join('. ')}. Quote: ${data.quote}`;
       const buffer = await generateSpeech(missionText, selectedLanguage);
       if (buffer) {
           if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
-          const source = audioCtxRef.current.createBufferSource(); 
-          source.buffer = buffer; source.connect(audioCtxRef.current.destination); source.start(0);
-          audioSourceRef.current = source; setAudioStatus('PLAYING');
-          source.onended = () => setAudioStatus('IDLE');
-      } else setAudioStatus('IDLE');
+          audioBufferRef.current = buffer;
+          setAudioDuration(buffer.duration);
+          setShowAudioControls(true);
+          startAudioNode(0);
+      } else {
+        setAudioStatus('IDLE');
+        alert("Audio synthesis failed.");
+      }
     } catch (e) { setAudioStatus('IDLE'); }
+  };
+
+  const formatTime = (time: number) => {
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const startBeYouAssessment = async (e: React.FormEvent) => {
@@ -474,15 +589,15 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                         <button 
                           onClick={handleSpeakMission} 
                           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 min-w-[140px] sm:min-w-[200px] px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 ${
-                            audioStatus === 'PLAYING' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 
+                            audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 
                             audioStatus === 'LOADING' ? 'bg-white/5 text-gray-400 border border-white/10 cursor-wait' :
                             'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/40'
                           }`}
                         >
                             {audioStatus === 'LOADING' ? <Loader2 className="w-3 h-3 animate-spin" /> : 
-                             audioStatus === 'PLAYING' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Play className="w-2.5 h-2.5 fill-current" />}
-                            <span>{audioStatus === 'LOADING' ? 'Analyzing...' : audioStatus === 'PLAYING' ? 'Stop' : 'Listen'}</span>
-                            {audioStatus === 'PLAYING' && <AudioVisualizer />}
+                             audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Play className="w-2.5 h-2.5 fill-current" />}
+                            <span>{audioStatus === 'LOADING' ? 'Analyzing...' : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'Stop' : 'Listen'}</span>
+                            {(audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && <AudioVisualizer />}
                         </button>
 
                         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -520,6 +635,62 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                         </div>
                       </div>
                   </div>
+
+                  {/* Audio Control Bar */}
+                  {showAudioControls && (
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4">
+                          <button onClick={togglePauseResume} className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all active:scale-90">
+                            {audioStatus === 'PLAYING' ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
+                          </button>
+                          <div className="flex-1 flex flex-col gap-1">
+                            <input 
+                              type="range" 
+                              min="0" 
+                              max={audioDuration || 0} 
+                              step="0.01"
+                              value={audioCurrentTime} 
+                              onChange={handleScrub}
+                              className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-500"
+                            />
+                            <div className="flex justify-between text-[8px] sm:text-[10px] font-black font-mono text-gray-500 uppercase tracking-widest">
+                              <span>{formatTime(audioCurrentTime)}</span>
+                              <span>{formatTime(audioDuration)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/5">
+                          <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-3 group">
+                              <Volume2 className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+                              <input 
+                                type="range" min="0" max="1" step="0.01" 
+                                value={audioVolume} onChange={e => setAudioVolume(parseFloat(e.target.value))}
+                                className="w-20 sm:w-24 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white" 
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Gauge className="w-4 h-4 text-gray-500" />
+                              <div className="flex bg-white/5 p-1 rounded-lg gap-1">
+                                {PLAYBACK_SPEEDS.map(speed => (
+                                  <button 
+                                    key={speed} 
+                                    onClick={() => setAudioSpeed(speed)}
+                                    className={`px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black transition-all ${audioSpeed === speed ? 'bg-cyan-500 text-black' : 'text-gray-500 hover:text-white'}`}
+                                  >
+                                    {speed}x
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <button onClick={() => { stopAudio(); setShowAudioControls(false); }} className="text-[8px] sm:text-[10px] font-black text-gray-600 hover:text-red-500 uppercase tracking-widest transition-colors">Terminate Link</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-6 sm:space-y-10">
                     <div className="space-y-4">
@@ -661,6 +832,8 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: rgba(255,255,255,0.05); border-radius: 3px; }
+        input[type=range]::-webkit-slider-thumb { height: 14px; width: 14px; border-radius: 7px; background: #fff; cursor: pointer; -webkit-appearance: none; margin-top: -4px; box-shadow: 0 0 10px rgba(34,211,238,0.5); }
       `}</style>
     </div>
   );

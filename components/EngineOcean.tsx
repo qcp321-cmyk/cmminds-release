@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, Waves, Volume2, Loader2, Sparkles, BookOpen, GraduationCap, Target, ExternalLink, FileDown, Globe, Play, Square, User, Bot, Microscope, Activity, Gauge, Headphones, X, CheckCircle2, Bookmark, ImageIcon, Info, HelpCircle } from 'lucide-react';
+import { Search, Waves, Volume2, Loader2, Sparkles, BookOpen, GraduationCap, Target, ExternalLink, FileDown, Globe, Play, Pause, Square, User, Bot, Microscope, Activity, Gauge, Headphones, X, CheckCircle2, Bookmark, ImageIcon, Info, HelpCircle, Volume1, VolumeX } from 'lucide-react';
 import { engineOceanQuery, generateSpeech, deepDiveQuery, generateFounderRemark, translateEngineResult, generateMissionImage } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import { mockBackend } from '../services/mockBackend';
@@ -15,9 +15,9 @@ const LANGUAGES = [
 ];
 
 const DIFFICULTIES = ['Standard', 'Adaptive', 'Specialized', 'Hardcore'];
-const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2];
 
-type AudioStatus = 'IDLE' | 'LOADING' | 'PLAYING';
+type AudioStatus = 'IDLE' | 'LOADING' | 'PLAYING' | 'PAUSED';
 type AudioChoice = 'HUMANIZED' | 'DEEP_DIVE' | 'BOTH';
 
 const AudioVisualizer = () => (
@@ -37,62 +37,134 @@ const EngineOcean: React.FC = () => {
   const [deepDiveLoading, setDeepDiveLoading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [result, setResult] = useState<{ humanized: string, summary: string, grounding: any[], deepDive?: string, imageUrl?: string } | null>(null);
+  
+  // Advanced Audio State
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('IDLE');
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioVolume, setAudioVolume] = useState(1);
+  const [audioSpeed, setAudioSpeed] = useState(1);
+  const [showAudioControls, setShowAudioControls] = useState(false);
+
   const [isExporting, setIsExporting] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showAudioSelector, setShowAudioSelector] = useState(false);
 
   const currentUser = mockBackend.getCurrentUser();
 
-  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  // Audio Playback Refs
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const offsetRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
+
   const resultRef = useRef<HTMLDivElement>(null);
-  const prefetchedBuffers = useRef<Map<string, AudioBuffer>>(new Map());
   const pastTopicsRef = useRef<{ query: string; recap: string }[]>([]);
 
   useEffect(() => {
-    return () => stopAudio();
+    return () => {
+      stopAudio();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   useEffect(() => {
-    if (!result || isTranslating) return;
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.setTargetAtTime(audioVolume, audioCtxRef.current?.currentTime || 0, 0.05);
+    }
+  }, [audioVolume]);
 
-    const performTranslation = async () => {
-      setIsTranslating(true);
-      stopAudio();
-      prefetchedBuffers.current.clear();
+  useEffect(() => {
+    if (audioSourceRef.current) {
+      audioSourceRef.current.playbackRate.setTargetAtTime(audioSpeed, audioCtxRef.current?.currentTime || 0, 0.05);
+    }
+  }, [audioSpeed]);
 
-      try {
-        const translated = await translateEngineResult(result.humanized, result.summary, selectedLanguage, result.deepDive);
-        setResult(prev => prev ? { ...prev, ...translated } : null);
-
-        const textToPreFetch = `Briefing: ${translated.humanized}`;
-        const buffer = await generateSpeech(textToPreFetch, selectedLanguage);
-        if (buffer) prefetchedBuffers.current.set('HUMANIZED', buffer);
-      } catch (e) {
-        console.error("Language switch failed", e);
-      } finally {
-        setIsTranslating(false);
+  const updateAudioProgress = useCallback(() => {
+    if (audioStatus === 'PLAYING' && audioCtxRef.current) {
+      const elapsed = (audioCtxRef.current.currentTime - startTimeRef.current) * audioSpeed;
+      const current = offsetRef.current + elapsed;
+      setAudioCurrentTime(current);
+      if (current >= audioDuration) {
+        setAudioStatus('IDLE');
+        offsetRef.current = 0;
+        setAudioCurrentTime(0);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        return;
       }
-    };
+    }
+    rafRef.current = requestAnimationFrame(updateAudioProgress);
+  }, [audioStatus, audioSpeed, audioDuration]);
 
-    performTranslation();
-  }, [selectedLanguage]);
-
-  const stopAudio = useCallback(() => {
+  const startAudioNode = (buffer: AudioBuffer, offset: number) => {
+    if (!audioCtxRef.current) return;
+    
     if (audioSourceRef.current) {
       try { audioSourceRef.current.stop(); } catch(e){}
-      audioSourceRef.current = null;
+    }
+
+    const source = audioCtxRef.current.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.value = audioSpeed;
+
+    if (!gainNodeRef.current) {
+      gainNodeRef.current = audioCtxRef.current.createGain();
+      gainNodeRef.current.gain.value = audioVolume;
+      gainNodeRef.current.connect(audioCtxRef.current.destination);
+    }
+
+    source.connect(gainNodeRef.current);
+    source.start(0, offset);
+    
+    audioSourceRef.current = source;
+    offsetRef.current = offset;
+    startTimeRef.current = audioCtxRef.current.currentTime;
+    setAudioStatus('PLAYING');
+    
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(updateAudioProgress);
+  };
+
+  const stopAudio = () => {
+    if (audioSourceRef.current) {
+        try { audioSourceRef.current.stop(); } catch(e){}
+        audioSourceRef.current = null;
     }
     setAudioStatus('IDLE');
-  }, []);
+    offsetRef.current = 0;
+    setAudioCurrentTime(0);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  };
 
-  const getAudioCtx = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
+  const togglePauseResume = () => {
+    if (audioStatus === 'PLAYING') {
+      if (audioSourceRef.current) {
+        try { audioSourceRef.current.stop(); } catch(e){}
+      }
+      const elapsed = (audioCtxRef.current!.currentTime - startTimeRef.current) * audioSpeed;
+      offsetRef.current = offsetRef.current + elapsed;
+      setAudioStatus('PAUSED');
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    } else if (audioStatus === 'PAUSED' && audioBufferRef.current) {
+      startAudioNode(audioBufferRef.current, offsetRef.current);
     }
-    return audioCtxRef.current;
+  };
+
+  const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newOffset = parseFloat(e.target.value);
+    setAudioCurrentTime(newOffset);
+    if (audioBufferRef.current && (audioStatus === 'PLAYING' || audioStatus === 'PAUSED')) {
+      startAudioNode(audioBufferRef.current, newOffset);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleBookmark = () => {
@@ -121,7 +193,6 @@ const EngineOcean: React.FC = () => {
     let currentMarks = marks;
     let isSyllabusMode = false;
 
-    // Handle special syntax
     if (processedQuery.startsWith('>')) {
       isSyllabusMode = true;
       processedQuery = processedQuery.substring(1).trim();
@@ -142,7 +213,7 @@ const EngineOcean: React.FC = () => {
     setLoading(true);
     setResult(null);
     stopAudio();
-    prefetchedBuffers.current.clear();
+    setShowAudioControls(false);
     
     mockBackend.trackEvent(userId, 'FORM_SUBMISSION', 'Engine Ocean inquiry', { query: processedQuery, grade, marks: currentMarks, difficulty, isSyllabusMode });
 
@@ -160,12 +231,6 @@ const EngineOcean: React.FC = () => {
       const recap = data.humanized.split('.').slice(0, 2).join('. ') + '.';
       pastTopicsRef.current.push({ query: processedQuery, recap });
 
-      setTimeout(async () => {
-        const textToPreFetch = data.humanized.substring(0, 500); 
-        const buffer = await generateSpeech(textToPreFetch, selectedLanguage);
-        if (buffer) prefetchedBuffers.current.set('HUMANIZED', buffer);
-      }, 100);
-
       const lenis = (window as any).lenis;
       if (lenis && resultRef.current) {
         lenis.scrollTo(resultRef.current, { offset: -50 });
@@ -181,18 +246,14 @@ const EngineOcean: React.FC = () => {
     try {
       const dd = await deepDiveQuery(query, result.humanized);
       setResult(prev => prev ? { ...prev, deepDive: dd } : null);
-      
-      setTimeout(async () => {
-        const buffer = await generateSpeech(dd.substring(0, 500), selectedLanguage);
-        if (buffer) prefetchedBuffers.current.set('DEEP_DIVE', buffer);
-      }, 100);
     } catch (e) { alert("Neural expansion failed."); } finally { setDeepDiveLoading(false); }
   };
 
   const initiateAudioSelector = () => {
     if (!result) return;
-    if (audioStatus === 'PLAYING') {
+    if (audioStatus === 'PLAYING' || audioStatus === 'PAUSED') {
       stopAudio();
+      setShowAudioControls(false);
       return;
     }
     setShowAudioSelector(true);
@@ -202,8 +263,8 @@ const EngineOcean: React.FC = () => {
     if (!result) return;
     setShowAudioSelector(false);
     
-    const ctx = getAudioCtx();
-    if (ctx.state === 'suspended') await ctx.resume();
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
+    if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
 
     setAudioStatus('LOADING');
     try {
@@ -216,33 +277,25 @@ const EngineOcean: React.FC = () => {
         textToRead = `${result.humanized}. ${result.deepDive || ''}. ${result.summary}`;
       }
 
+      // Memory Logic: Check for related past topics
       const related = pastTopicsRef.current.find(p => p.query !== query && isRelated(query, p.query));
       if (related) {
-        textToRead = `Recap of related study: ${related.recap}. Now, continuing: ${textToRead}`;
+        textToRead = `Recap of related study node: ${related.recap}. Now, delivering new synthesis: ${textToRead}`;
       }
 
       const buffer = await generateSpeech(textToRead, selectedLanguage);
       if (buffer) {
-        playBuffer(buffer);
+        audioBufferRef.current = buffer;
+        setAudioDuration(buffer.duration);
+        setShowAudioControls(true);
+        startAudioNode(buffer, 0);
       } else {
         setAudioStatus('IDLE');
+        alert("Audio synthesis failed.");
       }
     } catch (e) {
       setAudioStatus('IDLE');
     }
-  };
-
-  const playBuffer = (buffer: AudioBuffer) => {
-    stopAudio();
-    const ctx = getAudioCtx();
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.playbackRate.value = playbackSpeed;
-    source.connect(ctx.destination);
-    source.start(0);
-    audioSourceRef.current = source;
-    setAudioStatus('PLAYING');
-    source.onended = () => setAudioStatus('IDLE');
   };
 
   const renderFormattedText = (text: string) => {
@@ -382,7 +435,6 @@ const EngineOcean: React.FC = () => {
                 />
               </div>
 
-              {/* Tips & Tricks UI */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-2">
                 <div className="flex items-start gap-3 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl group hover:border-cyan-500/30 transition-all">
                   <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400 shrink-0"><Sparkles className="w-3.5 h-3.5" /></div>
@@ -446,17 +498,10 @@ const EngineOcean: React.FC = () => {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-3 py-2 rounded-lg sm:rounded-xl border border-white/10 shrink-0">
-                    <Gauge className="w-3.5 h-3.5 text-gray-500" />
-                    <select value={playbackSpeed} onChange={e => setPlaybackSpeed(parseFloat(e.target.value))} className="bg-transparent text-[8px] sm:text-[10px] font-black uppercase text-white outline-none cursor-pointer">
-                      {PLAYBACK_SPEEDS.map(s => <option key={s} value={s} className="bg-black">{s}x</option>)}
-                    </select>
-                  </div>
-
-                  <button onClick={initiateAudioSelector} disabled={isTranslating} className={`flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 min-w-[100px] ${audioStatus === 'PLAYING' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-white/10 hover:bg-white/20 text-white disabled:opacity-50'}`}>
-                    {audioStatus === 'LOADING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : audioStatus === 'PLAYING' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    <span>{audioStatus === 'PLAYING' ? 'Stop' : 'Listen'}</span>
-                    {audioStatus === 'PLAYING' && <AudioVisualizer />}
+                  <button onClick={initiateAudioSelector} disabled={isTranslating} className={`flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 min-w-[100px] ${audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-white/10 hover:bg-white/20 text-white disabled:opacity-50'}`}>
+                    {audioStatus === 'LOADING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span>{audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'Stop' : 'Listen'}</span>
+                    {(audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && <AudioVisualizer />}
                   </button>
 
                   <div className="flex items-center gap-2">
@@ -472,6 +517,62 @@ const EngineOcean: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Advanced Audio Controls Bar */}
+              {showAudioControls && (
+                <div className="mb-8 bg-black/60 backdrop-blur-xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 animate-in slide-in-from-top-2 duration-300">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                      <button onClick={togglePauseResume} className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all active:scale-90">
+                        {audioStatus === 'PLAYING' ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
+                      </button>
+                      <div className="flex-1 flex flex-col gap-1">
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max={audioDuration || 0} 
+                          step="0.01"
+                          value={audioCurrentTime} 
+                          onChange={handleScrub}
+                          className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-500"
+                        />
+                        <div className="flex justify-between text-[8px] sm:text-[10px] font-black font-mono text-gray-500 uppercase tracking-widest">
+                          <span>{formatTime(audioCurrentTime)}</span>
+                          <span>{formatTime(audioDuration)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-3 group">
+                          {audioVolume === 0 ? <VolumeX className="w-4 h-4 text-gray-500" /> : audioVolume < 0.5 ? <Volume1 className="w-4 h-4 text-gray-500" /> : <Volume2 className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />}
+                          <input 
+                            type="range" min="0" max="1" step="0.01" 
+                            value={audioVolume} onChange={e => setAudioVolume(parseFloat(e.target.value))}
+                            className="w-20 sm:w-24 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white" 
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Gauge className="w-4 h-4 text-gray-500" />
+                          <div className="flex bg-white/5 p-1 rounded-lg gap-1">
+                            {PLAYBACK_SPEEDS.map(speed => (
+                              <button 
+                                key={speed} 
+                                onClick={() => setAudioSpeed(speed)}
+                                className={`px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black transition-all ${audioSpeed === speed ? 'bg-cyan-500 text-black' : 'text-gray-500 hover:text-white'}`}
+                              >
+                                {speed}x
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <button onClick={() => { stopAudio(); setShowAudioControls(false); }} className="text-[8px] sm:text-[10px] font-black text-gray-600 hover:text-red-500 uppercase tracking-widest transition-colors">Terminate Stream</button>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="space-y-8 sm:space-y-12 relative">
                  {isTranslating && (
@@ -553,7 +654,11 @@ const EngineOcean: React.FC = () => {
            </div>
         </div>
       )}
-      <style>{`@keyframes sound-wave { 0%, 100% { height: 3px; } 50% { height: 100%; } }`}</style>
+      <style>{`
+        @keyframes sound-wave { 0%, 100% { height: 3px; } 50% { height: 100%; } }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.05); border-radius: 2px; }
+        input[type=range]::-webkit-slider-thumb { height: 12px; width: 12px; border-radius: 6px; background: #fff; cursor: pointer; -webkit-appearance: none; margin-top: -4px; box-shadow: 0 0 10px rgba(34,211,238,0.5); }
+      `}</style>
     </section>
   );
 };

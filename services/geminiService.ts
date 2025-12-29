@@ -197,7 +197,7 @@ export const generateSpeech = async (text: string, targetLanguage: string = 'Eng
       .replace(/[*#_~`>\[\]\(\)\/\\|]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
-      .substring(0, 1000); 
+      .substring(0, 5000); // Increased character limit for long-form content
     
     const prompt = `Speak the following clearly in ${targetLanguage}: ${safeText}`;
 
