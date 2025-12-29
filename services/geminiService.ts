@@ -123,24 +123,22 @@ export const engineOceanQuery = async (query: string, grade: string, marks: stri
   
   let syllabusDirective = "";
   if (isSyllabusMode && isUniversity) {
-    syllabusDirective = `SYLLABUS MODE ACTIVE: Reconstruct the entire curriculum for "${query}" as a definitive 'CURRICULUM SYNERGY: 8-SEMESTER ROADMAP'. 
-    Divide the course into 8 distinct semesters with high-impact execution-driven modules for each. 
-    Format this as a child node of a University/Higher Ed academic structure.`;
+    syllabusDirective = "SYLLABUS MODE ACTIVE: You must include a section called 'CURRICULUM SYNERGY: 8-SEMESTER ROADMAP' where you break down this entire field of study into 8 distinct semesters suitable for a university degree.";
   } else if (isSyllabusMode) {
-    syllabusDirective = "SYLLABUS MODE ACTIVE: Provide a comprehensive multi-year curriculum roadmap for this academic topic suitable for schooling levels.";
+    syllabusDirective = "SYLLABUS MODE ACTIVE: Provide a comprehensive multi-year roadmap for this academic topic suitable for K-12.";
   }
 
   const prompt = `Perform an Exhaustive Educational Resolution for Query: "${query}".
-  Parameters: Academic Node: ${grade}, Marks Expectation: ${marks}, Difficulty Bias: ${difficulty}.
+  Parameters: Academic Node: ${grade} (${isUniversity ? 'University Level' : 'K-12 Level'}), Marks Expectation: ${marks}, Difficulty Bias: ${difficulty}.
   
   ${syllabusDirective}
 
   STRICT INSTRUCTIONS:
-  1. CONTENT DEPTH: Provide a massive, high-fidelity resolution (3x longer than normal). Ensure the depth reflects a ${marks}-mark academic weightage.
+  1. CONTENT DEPTH: Provide a massive, high-fidelity resolution (3x longer than normal).
   2. STRUCTURE: Use clear, bold-text style headers: ABSTRACT, CORE MECHANICS, MULTIDIMENSIONAL ANALYSIS, VISUALISATION, ACADEMIC REFERENCES, ${isSyllabusMode ? 'CURRICULUM SYNERGY' : ''}. 
-  3. NO SPECIAL CHARACTERS: Do not use #, *, _, [, ], or complex markdown symbols. Use plain text spacing for formatting.
+  3. NO SPECIAL CHARACTERS: Do not use #, *, _, [, ], or complex markdown symbols in the content. Use plain text spacing for formatting.
   4. VISUALS: Mandatory. Under the VISUALISATION section, provide a highly detailed textual description that will be paired with an AI image.
-  5. TONALITY: Highest intelligence, elite academic reasoning.
+  5. TONALITY: Highest intelligence, university-grade reasoning.
   
   JSON Schema: { "humanized": "Full exhaustive plain-text briefing", "summary": "One-line AI engine meta-perspective" }`;
 

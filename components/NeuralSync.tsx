@@ -1,16 +1,15 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Zap, X, Loader2, Waves, ShieldCheck, User, Phone, CheckCircle2, Play, Square, Info, AlertTriangle } from 'lucide-react';
+import { Mic, MicOff, Zap, X, Loader2, Waves, ShieldCheck, User, Phone, CheckCircle2, Play, Square, Info, ArrowUpRight } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 
 const NeuralSync: React.FC = () => {
-  const [status, setStatus] = useState<'IDLE' | 'COUNTDOWN' | 'RECORDING' | 'FORM' | 'SUCCESS' | 'ERROR'>('IDLE');
+  const [status, setStatus] = useState<'IDLE' | 'COUNTDOWN' | 'RECORDING' | 'FORM' | 'SUCCESS'>('IDLE');
   const [countdown, setCountdown] = useState(3);
   const [recordTime, setRecordTime] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', phone: '' });
-  const [errorMessage, setErrorMessage] = useState('');
   
   const timerRef = useRef<number | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -47,12 +46,6 @@ const NeuralSync: React.FC = () => {
   };
 
   const startRecording = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setErrorMessage("Secure audio transmissions are not supported by this browser node.");
-        setStatus('ERROR');
-        return;
-    }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -83,15 +76,9 @@ const NeuralSync: React.FC = () => {
           return prev + 1;
         });
       }, 1000);
-    } catch (err: any) {
-      console.error("Mic access failure:", err);
-      let msg = "Uplink failed: ";
-      if (err.name === 'NotAllowedError') msg += "Access denied by user.";
-      else if (err.name === 'NotFoundError') msg += "Requested device not detected.";
-      else msg += err.message || "Unknown error.";
-      
-      setErrorMessage(msg);
-      setStatus('ERROR');
+    } catch (err) {
+      console.error("Mic access denied", err);
+      setStatus('IDLE');
     }
   };
 
@@ -127,123 +114,168 @@ const NeuralSync: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-10 mb-24 relative z-50">
-      <div 
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className="glass-panel rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-16 border border-white/10 relative overflow-hidden group transition-all duration-500 hover:border-cyan-500/30"
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
         
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-          
-          <div className="flex-1 space-y-6 text-left">
-             <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full">
-                <Zap className="w-4 h-4 text-cyan-400" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Founder Connection</span>
-             </div>
-             <div>
-                <h3 className="text-2xl sm:text-4xl md:text-5xl font-black text-white italic tracking-tighter mb-2 leading-tight">
-                  let me know , if you want to be a part of <span className="text-cyan-500">ed-revolution</span> and why?
-                </h3>
-                <p className="text-gray-500 font-mono text-[10px] uppercase tracking-[0.4em]">Direct Uplink to Aman Kumar Singh</p>
-             </div>
-             <p className="text-gray-400 max-w-md text-sm sm:text-lg font-light leading-relaxed italic">
-               "We aren't just building a tool; we're establishing a foundation for the next generation. My vision is to eliminate the memory-based cycle and replace it with application and synthesis."
-             </p>
-             <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-widest text-gray-600">
-                <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-cyan-500" /> Secure Connection</span>
-                <span className="flex items-center gap-2"><Waves className="w-4 h-4 text-purple-500" /> Voice Verification</span>
-             </div>
-          </div>
+        {/* Card 1: Founder's Mandate */}
+        <div className="glass-panel rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-16 border border-white/10 relative overflow-hidden flex flex-col justify-center">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] to-transparent pointer-events-none"></div>
+            <div className="relative z-10 space-y-6 sm:space-y-10">
+                <div className="relative inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full group/tooltip">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">The Architect's Vision</span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-black/95 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-cyan-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl z-50">
+                      Neural Roadmap Strategy
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white italic tracking-tighter leading-[0.95] uppercase">
+                        Ready to join the <span className="text-cyan-500">ed-revolution?</span>
+                    </h3>
+                    <p className="text-[10px] sm:text-xs font-black text-gray-500 uppercase tracking-[0.5em] italic">
+                        Direct Uplink to Aman Kumar Singh
+                    </p>
+                </div>
 
-          <div className="w-full md:w-[400px] flex flex-col items-center justify-center min-h-[300px] bg-black/40 border border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative">
+                <div className="space-y-6">
+                    <p className="text-gray-400 text-lg sm:text-xl font-light leading-relaxed italic border-l-4 border-cyan-600 pl-6 sm:pl-10">
+                        "We aren't just building a tool; we're establishing a foundation for the next generation. My vision is to eliminate the memory-based cycle and replace it with <span className="text-white font-bold">application and synthesis.</span>"
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-8 pt-4">
+                    <div className="relative flex items-center gap-2 group/tooltip">
+                        <ShieldCheck className="w-4 h-4 text-cyan-500/60" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">Secure Protocol</span>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-black/95 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-cyan-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl z-50">
+                          AES-256 Identification
+                        </div>
+                    </div>
+                    <div className="relative flex items-center gap-2 group/tooltip">
+                        <Waves className="w-4 h-4 text-purple-500/60" />
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">Verification Active</span>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-black/95 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-purple-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl z-50">
+                          Biometric Voice Validation
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Card 2: Neural Uplink (Interaction) */}
+        <div 
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="glass-panel rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-12 border border-white/10 relative overflow-hidden group transition-all duration-500 hover:border-cyan-500/30 flex flex-col items-center justify-center min-h-[450px] tilt-card"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-cyan-500/5 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+          
+          <div className="relative z-10 w-full max-w-sm flex flex-col items-center justify-center h-full">
              
              {status === 'IDLE' && (
-                <div className="text-center animate-in fade-in duration-500">
-                   <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                      <Mic className="w-8 h-8 text-gray-400 group-hover:text-cyan-400" />
+                <div className="text-center animate-in fade-in duration-500 space-y-8">
+                   <div className="relative group/tooltip">
+                      <div className="absolute -inset-4 bg-cyan-500/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto relative z-10 group-hover:scale-110 transition-transform duration-700 group-hover:border-cyan-500/40 shadow-2xl">
+                         <Mic className="w-10 h-10 sm:w-14 sm:h-14 text-gray-500 group-hover:text-cyan-400 transition-colors" />
+                      </div>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-6 px-3 py-1.5 bg-black/95 border border-cyan-500/30 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-cyan-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-[0_0_20px_rgba(34,211,238,0.2)] z-50">
+                        Hold Cursor to Start Capture
+                      </div>
                    </div>
-                   <h4 className="text-white font-bold uppercase tracking-widest mb-2">Hover to Connect</h4>
-                   <p className="text-gray-500 text-[10px] uppercase leading-relaxed max-w-[200px] mx-auto">Keep your cursor here to start a 30 second secure audio message to Aman.</p>
+                   
+                   <div className="space-y-4">
+                      <h4 className="text-2xl sm:text-3xl font-black text-white italic uppercase tracking-tighter">Establish <span className="text-cyan-500">Uplink</span></h4>
+                      <p className="text-gray-500 text-[10px] sm:text-xs uppercase leading-relaxed tracking-widest max-w-[240px] mx-auto font-medium">
+                        Hold cursor here to transmit a <span className="text-white font-bold">30-second briefing</span> directly to our founder.
+                      </p>
+                   </div>
+
+                   <div className="relative flex justify-center pt-4 group/tooltip">
+                      <div className="p-3 bg-white/5 rounded-full border border-white/10 animate-bounce">
+                         <ArrowUpRight className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-3 py-1.5 bg-black/95 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-gray-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl z-50">
+                        Direct Access Mode
+                      </div>
+                   </div>
                 </div>
              )}
 
              {status === 'COUNTDOWN' && (
                 <div className="text-center">
-                   <div className="w-24 h-24 rounded-full border-4 border-cyan-500/20 flex items-center justify-center mx-auto mb-6 relative">
+                   <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-cyan-500/20 flex items-center justify-center mx-auto mb-8 relative">
                       <div className="absolute inset-0 border-4 border-cyan-500 rounded-full animate-[ping_1s_infinite] opacity-20"></div>
-                      <span className="text-5xl font-black text-cyan-400 italic">{countdown}</span>
+                      <span className="text-6xl font-black text-cyan-400 italic">{countdown}</span>
                    </div>
-                   <p className="text-cyan-400/80 font-black uppercase tracking-widest text-xs">Connecting...</p>
+                   <p className="text-cyan-400 font-black uppercase tracking-[0.4em] text-xs">Calibrating Path...</p>
                 </div>
              )}
 
              {status === 'RECORDING' && (
-                <div className="text-center w-full">
-                   <div className="flex items-end justify-center gap-1 mb-8 h-12">
-                      {[...Array(12)].map((_, i) => (
-                        <div key={i} className="w-1.5 bg-red-500 rounded-full animate-wave" style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.05}s` }}></div>
+                <div className="text-center w-full space-y-8">
+                   <div className="flex items-end justify-center gap-1.5 h-16 sm:h-20">
+                      {[...Array(18)].map((_, i) => (
+                        <div key={i} className="w-1.5 sm:w-2 bg-red-500 rounded-full animate-wave" style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.04}s` }}></div>
                       ))}
                    </div>
-                   <div className="text-4xl font-mono text-red-500 font-bold mb-4">00:{recordTime.toString().padStart(2, '0')}</div>
+                   <div className="space-y-2">
+                      <div className="text-5xl font-mono text-red-500 font-bold tracking-tighter">00:{recordTime.toString().padStart(2, '0')}</div>
+                      <p className="text-red-500/50 text-[10px] font-black uppercase tracking-widest">Transmitting Live</p>
+                   </div>
                    <button 
                      onClick={stopRecording}
-                     className="px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-full font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-red-900/40 flex items-center gap-2 mx-auto"
+                     className="px-10 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_20px_40px_rgba(220,38,38,0.3)] flex items-center gap-3 mx-auto active:scale-95"
                    >
-                     <Square className="w-3 h-3 fill-current" /> Stop and Send
+                     <Square className="w-4 h-4 fill-current" /> Terminate and Send
                    </button>
-                   <p className="text-gray-500 text-[9px] uppercase tracking-widest mt-6">Recording in progress (Max 30 seconds)</p>
                 </div>
              )}
 
              {status === 'FORM' && (
-                <form onSubmit={handleSubmit} className="w-full space-y-4 animate-in slide-in-from-bottom-4">
-                   <div className="text-center mb-4">
-                      <div className="inline-flex items-center gap-2 text-green-400 text-[10px] font-black uppercase tracking-widest bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
-                         <CheckCircle2 className="w-3 h-3" /> Audio Captured
+                <form onSubmit={handleSubmit} className="w-full space-y-5 animate-in slide-in-from-bottom-4">
+                   <div className="text-center mb-6">
+                      <div className="inline-flex items-center gap-2 text-green-400 text-[10px] font-black uppercase tracking-widest bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">
+                         <CheckCircle2 className="w-4 h-4" /> Frequency Captured
                       </div>
                    </div>
-                   <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                      <input 
-                        type="text" placeholder="Name (Optional)" 
-                        value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white outline-none focus:border-cyan-500/50 text-xs" 
-                      />
+                   <div className="space-y-3">
+                      <div className="relative group">
+                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-cyan-500 transition-colors" />
+                         <input 
+                           type="text" placeholder="Identity Signature (Optional)" 
+                           value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                           className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-cyan-500/50 text-xs transition-all" 
+                         />
+                      </div>
+                      <div className="relative group">
+                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-cyan-500 transition-colors" />
+                         <input 
+                           type="tel" placeholder="Return Path / Phone (Optional)" 
+                           value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})}
+                           className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-cyan-500/50 text-xs transition-all" 
+                         />
+                      </div>
                    </div>
-                   <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                      <input 
-                        type="tel" placeholder="Phone (Optional)" 
-                        value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white outline-none focus:border-cyan-500/50 text-xs" 
-                      />
-                   </div>
-                   <button type="submit" className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-2xl transition-all active:scale-95">
-                      Submit Message
+                   <button type="submit" className="w-full py-5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_20px_40px_rgba(8,145,178,0.2)] transition-all active:scale-95">
+                      Verify and Transmit
                    </button>
-                   <button type="button" onClick={() => setStatus('IDLE')} className="w-full py-2 text-gray-600 hover:text-gray-400 font-bold uppercase text-[8px] tracking-widest">Cancel</button>
+                   <button type="button" onClick={() => setStatus('IDLE')} className="w-full py-2 text-gray-600 hover:text-gray-400 font-bold uppercase text-[9px] tracking-widest transition-colors">Abort Connection</button>
                 </form>
              )}
 
              {status === 'SUCCESS' && (
-                <div className="text-center animate-in zoom-in-95">
-                   <div className="w-20 h-20 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
-                      <ShieldCheck className="w-10 h-10 text-green-500" />
+                <div className="text-center animate-in zoom-in-95 space-y-8">
+                   <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-green-500/10 border border-green-500/40 flex items-center justify-center mx-auto shadow-[0_0_80px_rgba(34,197,94,0.15)] relative">
+                      <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping opacity-20"></div>
+                      <ShieldCheck className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
                    </div>
-                   <h4 className="text-white font-black uppercase tracking-tighter text-xl italic">Message Received</h4>
-                   <p className="text-gray-500 text-[10px] uppercase mt-2 tracking-widest leading-relaxed">Your voice message has been received. Aman will review your message shortly.</p>
-                </div>
-             )}
-
-             {status === 'ERROR' && (
-                <div className="text-center animate-in zoom-in-95">
-                    <div className="w-20 h-20 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mx-auto mb-6">
-                        <AlertTriangle className="w-10 h-10 text-red-500" />
-                    </div>
-                    <h4 className="text-white font-black uppercase tracking-tighter text-xl italic">Uplink Error</h4>
-                    <p className="text-red-500/70 text-[10px] uppercase mt-2 tracking-widest leading-relaxed px-4">{errorMessage}</p>
-                    <button onClick={() => setStatus('IDLE')} className="mt-6 px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-full text-[8px] font-black uppercase tracking-widest transition-all">Retry Synchronization</button>
+                   <div className="space-y-3">
+                      <h4 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter italic">Signal Delivered</h4>
+                      <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium tracking-widest leading-relaxed max-w-[280px] mx-auto">
+                        Your transmission has been ingested into the architectural node. Aman will review shortly.
+                      </p>
+                   </div>
                 </div>
              )}
           </div>
@@ -258,6 +290,14 @@ const NeuralSync: React.FC = () => {
         .animate-wave {
           animation: wave 1s ease-in-out infinite;
           transform-origin: bottom;
+        }
+        .tilt-card {
+          transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.5s ease;
+          transform-style: preserve-3d;
+          perspective: 1200px;
+        }
+        .tilt-card:hover {
+          transform: rotateX(8deg) rotateY(-2deg) translateY(-8px);
         }
       `}</style>
     </div>

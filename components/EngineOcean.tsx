@@ -121,13 +121,12 @@ const EngineOcean: React.FC = () => {
     let currentMarks = marks;
     let isSyllabusMode = false;
 
-    // Handle special syntax: '>' triggers syllabus reconstruction
+    // Handle special syntax
     if (processedQuery.startsWith('>')) {
       isSyllabusMode = true;
       processedQuery = processedQuery.substring(1).trim();
     }
 
-    // Handle special syntax: '/<marks>' for depth calibration
     if (processedQuery.includes('/')) {
       const parts = processedQuery.split('/');
       const potentialMarks = parts.pop()?.trim();
@@ -150,7 +149,7 @@ const EngineOcean: React.FC = () => {
     try {
       const [data, imageUrl] = await Promise.all([
         engineOceanQuery(processedQuery, grade, currentMarks, difficulty, isSyllabusMode),
-        generateMissionImage(`Academic whiteboard sketch or schematic architectural diagram of ${processedQuery} for educational context`)
+        generateMissionImage(`Academic whiteboard sketch of ${processedQuery} for educational node ${grade}`)
       ]);
 
       const finalResult = { ...data, imageUrl };
@@ -270,6 +269,20 @@ const EngineOcean: React.FC = () => {
                 <h3 className="text-xl sm:text-2xl font-black text-cyan-400 mt-10 mb-5 uppercase tracking-tighter italic border-b border-white/5 pb-2">
                   {cleaned}
                 </h3>
+                {(cleaned.toLowerCase().includes('visualisation') || cleaned.toLowerCase().includes('diagram')) && result?.imageUrl && (
+                  <div className="my-8 animate-in fade-in zoom-in-95 duration-1000">
+                    <div className="relative group overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl aspect-video bg-black/40">
+                      <img src={result.imageUrl} alt="Neural Synthesis Visualization" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                      <div className="absolute bottom-6 left-6 flex items-center gap-3">
+                         <div className="p-2 bg-cyan-500 rounded-lg text-black shadow-lg">
+                            <ImageIcon className="w-4 h-4" />
+                         </div>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow-md">Generated Schematic Visualization</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
         }
@@ -347,7 +360,7 @@ const EngineOcean: React.FC = () => {
     <section id="ocean" className="py-12 sm:py-32 px-1 sm:px-4 bg-gradient-to-b from-black to-[#050505] relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent"></div>
       
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4 sm:mb-6">
             <Waves className="w-4 h-4 text-cyan-400" />
@@ -370,19 +383,19 @@ const EngineOcean: React.FC = () => {
               </div>
 
               {/* Tips & Tricks UI */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-2">
-                <div className="flex items-center gap-4 p-4 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl group hover:border-cyan-500/30 transition-all cursor-default">
-                  <div className="p-3 bg-cyan-500/10 rounded-xl text-cyan-400 shrink-0"><Sparkles className="w-5 h-5" /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-2">
+                <div className="flex items-start gap-3 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl group hover:border-cyan-500/30 transition-all">
+                  <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400 shrink-0"><Sparkles className="w-3.5 h-3.5" /></div>
                   <div>
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1 italic">Syllabus Reconstruction</p>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">Start query with <span className="text-cyan-400 font-bold">&gt;</span> to generate an exhaustive 8-semester degree roadmap for Higher Ed.</p>
+                    <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1 italic">Syllabus Mode</p>
+                    <p className="text-[8px] text-gray-500 leading-relaxed">Start with <span className="text-cyan-400 font-bold">&gt;</span> to generate an exhaustive degree roadmap (8 semesters for Univ).</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-purple-500/5 border border-purple-500/10 rounded-2xl group hover:border-purple-500/30 transition-all cursor-default">
-                  <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400 shrink-0"><Target className="w-5 h-5" /></div>
+                <div className="flex items-start gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-2xl group hover:border-purple-500/30 transition-all">
+                  <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400 shrink-0"><HelpCircle className="w-3.5 h-3.5" /></div>
                   <div>
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest mb-1 italic">Resolution Depth</p>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">Append <span className="text-purple-400 font-bold">/marks</span> (e.g. /100) to calibrate technical depth to specific academic weightage.</p>
+                    <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1 italic">Resolution Depth</p>
+                    <p className="text-[8px] text-gray-500 leading-relaxed">Add <span className="text-purple-400 font-bold">/marks</span> (e.g., /20) to force a specific academic weightage output.</p>
                   </div>
                 </div>
               </div>
@@ -402,7 +415,6 @@ const EngineOcean: React.FC = () => {
                   <option value="5" className="bg-black">5 - Core Summary</option>
                   <option value="10" className="bg-black">10 - Advanced Analysis</option>
                   <option value="20" className="bg-black">20 - Comprehensive Synthesis</option>
-                  <option value="50" className="bg-black">50 - Expert Framework</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -461,9 +473,9 @@ const EngineOcean: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 relative">
+              <div className="space-y-8 sm:space-y-12 relative">
                  {isTranslating && (
-                   <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-3xl">
+                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-3xl">
                       <div className="flex items-center gap-3 bg-black/80 p-6 rounded-2xl border border-cyan-500/30">
                         <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
                         <span className="text-xs font-black uppercase tracking-widest text-cyan-400">Neural Calibration...</span>
@@ -471,47 +483,28 @@ const EngineOcean: React.FC = () => {
                    </div>
                  )}
 
-                 <div className="lg:col-span-8 space-y-8 sm:space-y-12">
-                    <div className="space-y-3 sm:space-y-4">
-                        <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-cyan-400 tracking-widest bg-cyan-400/10 w-fit px-3 py-1.5 rounded-lg border border-cyan-400/20"><User className="w-3.5 h-3.5" /> High-Resolution Briefing</div>
-                        <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-gray-200 bg-white/5 p-5 sm:p-12 rounded-[1.2rem] sm:rounded-[2.5rem] border border-white/5 shadow-2xl overflow-x-hidden font-light min-h-[400px]">
-                        {renderFormattedText(result.humanized)}
-                        
-                        {result.deepDive && (
-                            <div className="mt-12 pt-12 border-t border-white/10 animate-in fade-in slide-in-from-top-4">
-                            <div className="flex items-center gap-2 sm:gap-3 mb-6 text-cyan-400 font-black uppercase text-[10px] sm:text-xs tracking-widest">
-                                <Microscope className="w-4 h-4 sm:w-5 h-5" /> Technical Nexus Expansion
-                            </div>
-                            <div className="text-gray-400 text-sm sm:text-base leading-relaxed italic border-l-2 border-cyan-500/30 pl-4 sm:pl-8 whitespace-pre-wrap break-words">
-                                {renderFormattedText(result.deepDive)}
-                            </div>
-                            </div>
-                        )}
+                 <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-cyan-400 tracking-widest bg-cyan-400/10 w-fit px-3 py-1.5 rounded-lg border border-cyan-400/20"><User className="w-3.5 h-3.5" /> High-Resolution Briefing</div>
+                    <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-gray-200 bg-white/5 p-5 sm:p-12 rounded-[1.2rem] sm:rounded-[2.5rem] border border-white/5 shadow-2xl overflow-x-hidden font-light min-h-[400px]">
+                      {renderFormattedText(result.humanized)}
+                      
+                      {result.deepDive && (
+                        <div className="mt-12 pt-12 border-t border-white/10 animate-in fade-in slide-in-from-top-4">
+                           <div className="flex items-center gap-2 sm:gap-3 mb-6 text-cyan-400 font-black uppercase text-[10px] sm:text-xs tracking-widest">
+                             <Microscope className="w-4 h-4 sm:w-5 h-5" /> Technical Nexus Expansion
+                           </div>
+                           <div className="text-gray-400 text-sm sm:text-base leading-relaxed italic border-l-2 border-cyan-500/30 pl-4 sm:pl-8 whitespace-pre-wrap break-words">
+                             {renderFormattedText(result.deepDive)}
+                           </div>
                         </div>
+                      )}
                     </div>
                  </div>
 
-                 <div className="lg:col-span-4 space-y-8">
-                    <div className="space-y-3 sm:space-y-4 sticky top-24">
-                        {result.imageUrl && (
-                            <>
-                                <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-emerald-400 tracking-widest bg-emerald-400/10 w-fit px-3 py-1.5 rounded-lg border border-emerald-400/20"><ImageIcon className="w-3.5 h-3.5" /> Core Visualization</div>
-                                <div className="relative group overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl aspect-square bg-black/40">
-                                    <img src={result.imageUrl} alt="Neural Synthesis Visualization" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-                                    <div className="absolute bottom-6 left-6 right-6">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-white drop-shadow-md">Technical Schematic</p>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                        
-                        <div className="space-y-3 sm:space-y-4 mt-8">
-                            <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-purple-400 tracking-widest bg-purple-400/10 w-fit px-3 py-1.5 rounded-lg border border-purple-400/20"><Bot className="w-3.5 h-3.5" /> AI Engine View</div>
-                            <div className="prose prose-invert prose-xs sm:prose-sm max-w-none text-gray-500 bg-purple-500/5 p-5 sm:p-8 rounded-[1.2rem] sm:rounded-[2rem] border border-purple-500/10 leading-relaxed italic overflow-x-hidden break-words">
-                                {result.summary}
-                            </div>
-                        </div>
+                 <div className="space-y-3 sm:space-y-4">
+                    <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-purple-400 tracking-widest bg-purple-400/10 w-fit px-3 py-1.5 rounded-lg border border-purple-400/20"><Bot className="w-3.5 h-3.5" /> Engine Metadata</div>
+                    <div className="prose prose-invert prose-xs sm:prose-sm max-w-none text-gray-500 bg-purple-500/5 p-5 sm:p-8 rounded-[1.2rem] sm:rounded-[2rem] border border-purple-500/10 leading-relaxed italic overflow-x-hidden break-words">
+                      {result.summary}
                     </div>
                  </div>
               </div>
