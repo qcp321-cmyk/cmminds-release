@@ -224,9 +224,11 @@ const App: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [curiosityColor, setCuriosityColor] = useState('#22d3ee');
   const [phraseIndex, setPhraseIndex] = useState(0);
+  const [isAppMounted, setIsAppMounted] = useState(false);
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    setIsAppMounted(true);
     const randomColor = RANDOM_CURIOSITY_COLORS[Math.floor(Math.random() * RANDOM_CURIOSITY_COLORS.length)];
     setCuriosityColor(randomColor);
 
@@ -286,6 +288,17 @@ const App: React.FC = () => {
     gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
+    // Robust resize observer for viewport/zoom synchronization
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Throttle refresh slightly for performance during continuous resize/zoom
+      gsap.delayedCall(0.1, handleResize);
+    });
+    resizeObserver.observe(document.documentElement);
+
     const handleStorage = () => {
         setCurrentUser(mockBackend.getCurrentUser());
         checkStatus();
@@ -308,6 +321,7 @@ const App: React.FC = () => {
     return () => {
       lenis.destroy();
       gsap.ticker.remove(tickerCallback);
+      resizeObserver.disconnect();
       lenisRef.current = null;
       (window as any).lenis = null;
       clearInterval(interval);
@@ -359,7 +373,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white selection:bg-cyan-500/30 overflow-x-hidden">
+    <div className={`min-h-screen bg-transparent text-white selection:bg-cyan-500/30 overflow-x-hidden transition-opacity duration-1000 ${isAppMounted ? 'opacity-100' : 'opacity-0'}`}>
       <ThreeBackground mode={engineMode === 'BEYOU' ? 'SOOTHING' : 'OFF'} />
 
       {sharedPayload && <SharedViewer payload={sharedPayload} onClose={() => setSharedPayload(null)} />}

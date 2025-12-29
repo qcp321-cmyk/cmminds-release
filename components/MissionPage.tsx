@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, ArrowRight, BrainCircuit, Sparkles, Waves, BarChart3, AlertCircle, Quote, ShieldCheck, Globe, Zap, Target } from 'lucide-react';
+import { X, ArrowRight, BrainCircuit, Sparkles, Waves, BarChart3, AlertCircle, Quote, ShieldCheck, Globe, Zap, Target, UserCheck, Activity, Terminal, Fingerprint } from 'lucide-react';
 
 interface MissionPageProps {
   onClose: () => void;
@@ -38,6 +38,88 @@ const MissionPage: React.FC<MissionPageProps> = ({ onClose }) => {
           We are rebuilding the neural pathway between academic concepts and real-world execution. Traditional systems measure retention; we measure <span className="text-white font-bold underline decoration-cyan-500 underline-offset-8">Synthesis.</span>
         </p>
       </header>
+
+      {/* Founder's Mandate Section */}
+      <section className="py-24 px-6 sm:px-12 relative overflow-hidden">
+        <div className="absolute top-1/2 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-[120px] -translate-x-1/2"></div>
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
+          
+          {/* Stylized Founder Card */}
+          <div className="lg:w-[450px] shrink-0">
+             <div className="relative group">
+                <div className="absolute -inset-2 bg-gradient-to-tr from-cyan-500/20 to-purple-500/20 rounded-[4rem] blur-2xl opacity-50"></div>
+                <div className="relative bg-[#0a0a0a] border border-white/10 rounded-[3.5rem] p-10 overflow-hidden">
+                    <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:30px_30px]"></div>
+                    <div className="relative z-10 flex flex-col items-center">
+                       <div className="w-48 h-56 rounded-[2.5rem] bg-gray-950 border border-white/5 overflow-hidden mb-8 relative shadow-2xl">
+                          <div className="absolute top-0 left-0 w-full h-1 bg-cyan-400/30 animate-[scan_3s_linear_infinite]"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <UserCheck className="w-20 h-20 text-white/5" />
+                          </div>
+                          <div className="absolute bottom-4 left-0 w-full text-center">
+                             <span className="text-[8px] font-black uppercase tracking-[0.5em] text-cyan-500/80">Arch-Node Active</span>
+                          </div>
+                       </div>
+                       
+                       <div className="text-center mb-8">
+                          <h3 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">Aman Kumar Singh</h3>
+                          <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.5em]">The Architect // Founder</p>
+                       </div>
+
+                       <div className="w-full space-y-3">
+                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                             <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Vision Status</span>
+                             <span className="text-[10px] font-bold text-cyan-400 uppercase italic">Executing</span>
+                          </div>
+                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                             <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Protocol</span>
+                             <span className="text-[10px] font-bold text-purple-400 uppercase italic">Neural Sync</span>
+                          </div>
+                       </div>
+                    </div>
+                </div>
+             </div>
+          </div>
+
+          {/* Vision Content */}
+          <div className="flex-1 space-y-10 relative z-10">
+             <div className="flex items-center gap-4">
+                <Terminal className="w-5 h-5 text-cyan-500" />
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.6em]">The Architect's Mandate</span>
+             </div>
+             
+             <h2 className="text-4xl sm:text-6xl font-black text-white leading-tight tracking-tighter italic uppercase">
+                "We aren't building <br/> 
+                <span className="text-cyan-500">another platform.</span> <br/>
+                We're building <span className="text-gray-600">an engine."</span>
+             </h2>
+
+             <div className="space-y-6 text-gray-400 text-lg sm:text-xl font-light leading-relaxed italic border-l-4 border-cyan-600 pl-8">
+                <p>
+                  "The current education system is a 19th-century storage protocol that we're still forcing 21st-century minds to run on. It's failing. My vision for CuriousMinds is simple: <span className="text-white font-bold">Eradicate the abstraction.</span>"
+                </p>
+                <p>
+                  "We are focusing on the $22/session sweet spot where human guidance meets algorithmic precision. This isn't about passing exams; it's about engineering the top 1% of global problem solvers."
+                </p>
+             </div>
+
+             <div className="flex flex-wrap gap-4 pt-4">
+                <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 group hover:border-cyan-500/40 transition-all">
+                   <Target className="w-4 h-4 text-cyan-400" />
+                   <span className="text-[10px] font-black text-white uppercase tracking-widest">Market Alignment</span>
+                </div>
+                <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 group hover:border-purple-500/40 transition-all">
+                   <ShieldCheck className="w-4 h-4 text-purple-400" />
+                   <span className="text-[10px] font-black text-white uppercase tracking-widest">Neural Integrity</span>
+                </div>
+                <div className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl border border-white/10 group hover:border-emerald-500/40 transition-all">
+                   <Zap className="w-4 h-4 text-emerald-400" />
+                   <span className="text-[10px] font-black text-white uppercase tracking-widest">Execution Priority</span>
+                </div>
+             </div>
+          </div>
+        </div>
+      </section>
 
       {/* Problem Section */}
       <section className="py-24 px-6 sm:px-12 bg-white/[0.02] border-y border-white/5">
@@ -190,6 +272,15 @@ const MissionPage: React.FC<MissionPageProps> = ({ onClose }) => {
           Activate Learning Lab <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
         </button>
       </footer>
+      
+      <style>{`
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };

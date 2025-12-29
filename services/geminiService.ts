@@ -117,18 +117,30 @@ export const generateScenario = async (topic: string, grade: string, difficulty:
   }
 };
 
-export const engineOceanQuery = async (query: string, grade: string, marks: string, difficulty: string = 'Standard'): Promise<any> => {
+export const engineOceanQuery = async (query: string, grade: string, marks: string, difficulty: string = 'Standard', isSyllabusMode: boolean = false): Promise<any> => {
   const ai = getAI();
   const isUniversity = grade === 'University' || parseInt(grade) >= 12;
-  const prompt = `Perform an Exhaustive Educational Resolution for Query: "${query}".
-  Parameters: Academic Node: ${grade} (${isUniversity ? 'University Level' : 'K-12 Level'}), Marks Expectation: ${marks}, Difficulty Bias: ${difficulty}.
   
+  let syllabusDirective = "";
+  if (isSyllabusMode && isUniversity) {
+    syllabusDirective = `SYLLABUS MODE ACTIVE: Reconstruct the entire curriculum for "${query}" as a definitive 'CURRICULUM SYNERGY: 8-SEMESTER ROADMAP'. 
+    Divide the course into 8 distinct semesters with high-impact execution-driven modules for each. 
+    Format this as a child node of a University/Higher Ed academic structure.`;
+  } else if (isSyllabusMode) {
+    syllabusDirective = "SYLLABUS MODE ACTIVE: Provide a comprehensive multi-year curriculum roadmap for this academic topic suitable for schooling levels.";
+  }
+
+  const prompt = `Perform an Exhaustive Educational Resolution for Query: "${query}".
+  Parameters: Academic Node: ${grade}, Marks Expectation: ${marks}, Difficulty Bias: ${difficulty}.
+  
+  ${syllabusDirective}
+
   STRICT INSTRUCTIONS:
-  1. CONTENT DEPTH: Provide a massive, high-fidelity resolution (3x longer than normal).
-  2. STRUCTURE: Use clear, bold-text style headers: ABSTRACT, CORE MECHANICS, MULTIDIMENSIONAL ANALYSIS, VISUALISATION, ACADEMIC REFERENCES. 
-  3. NO SPECIAL CHARACTERS: Do not use #, *, _, [, ], or complex markdown symbols in the content. Use plain text spacing for formatting.
-  4. VISUALS: Mandatory for Grade 5+. Under the VISUALISATION section, provide a highly detailed textual description that will be paired with an AI image.
-  5. TONALITY: Highest intelligence, university-grade reasoning.
+  1. CONTENT DEPTH: Provide a massive, high-fidelity resolution (3x longer than normal). Ensure the depth reflects a ${marks}-mark academic weightage.
+  2. STRUCTURE: Use clear, bold-text style headers: ABSTRACT, CORE MECHANICS, MULTIDIMENSIONAL ANALYSIS, VISUALISATION, ACADEMIC REFERENCES, ${isSyllabusMode ? 'CURRICULUM SYNERGY' : ''}. 
+  3. NO SPECIAL CHARACTERS: Do not use #, *, _, [, ], or complex markdown symbols. Use plain text spacing for formatting.
+  4. VISUALS: Mandatory. Under the VISUALISATION section, provide a highly detailed textual description that will be paired with an AI image.
+  5. TONALITY: Highest intelligence, elite academic reasoning.
   
   JSON Schema: { "humanized": "Full exhaustive plain-text briefing", "summary": "One-line AI engine meta-perspective" }`;
 
@@ -183,7 +195,6 @@ export const generateSpeech = async (text: string, targetLanguage: string = 'Eng
   
   const ai = getAI();
   try {
-    // Truncate to 1000 characters and strip all symbols to prevent 500 INTERNAL_ERROR
     const safeText = text
       .replace(/[*#_~`>\[\]\(\)\/\\|]/g, '')
       .replace(/\s+/g, ' ')
@@ -326,7 +337,7 @@ export const generateMissionImage = async (prompt: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
       model: IMAGE_MODEL,
-      contents: { parts: [{ text: `A futuristic, high-tech cinematic representation of: ${prompt}. Minimalist, dark background, cyan and purple accents.` }] },
+      contents: { parts: [{ text: `A clean, academic whiteboard sketch or schematic diagram of: ${prompt}. High clarity, minimalist, technical drawing style.` }] },
       config: {
         imageConfig: { aspectRatio: "16:9" }
       }

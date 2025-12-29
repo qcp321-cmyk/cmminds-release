@@ -1,15 +1,16 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, Zap, X, Loader2, Waves, ShieldCheck, User, Phone, CheckCircle2, Play, Square, Info } from 'lucide-react';
+import { Mic, MicOff, Zap, X, Loader2, Waves, ShieldCheck, User, Phone, CheckCircle2, Play, Square, Info, AlertTriangle } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 
 const NeuralSync: React.FC = () => {
-  const [status, setStatus] = useState<'IDLE' | 'COUNTDOWN' | 'RECORDING' | 'FORM' | 'SUCCESS'>('IDLE');
+  const [status, setStatus] = useState<'IDLE' | 'COUNTDOWN' | 'RECORDING' | 'FORM' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [countdown, setCountdown] = useState(3);
   const [recordTime, setRecordTime] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [audioBase64, setAudioBase64] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', phone: '' });
+  const [errorMessage, setErrorMessage] = useState('');
   
   const timerRef = useRef<number | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -46,6 +47,12 @@ const NeuralSync: React.FC = () => {
   };
 
   const startRecording = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setErrorMessage("Secure audio transmissions are not supported by this browser node.");
+        setStatus('ERROR');
+        return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -76,9 +83,15 @@ const NeuralSync: React.FC = () => {
           return prev + 1;
         });
       }, 1000);
-    } catch (err) {
-      console.error("Mic access denied", err);
-      setStatus('IDLE');
+    } catch (err: any) {
+      console.error("Mic access failure:", err);
+      let msg = "Uplink failed: ";
+      if (err.name === 'NotAllowedError') msg += "Access denied by user.";
+      else if (err.name === 'NotFoundError') msg += "Requested device not detected.";
+      else msg += err.message || "Unknown error.";
+      
+      setErrorMessage(msg);
+      setStatus('ERROR');
     }
   };
 
@@ -220,6 +233,17 @@ const NeuralSync: React.FC = () => {
                    </div>
                    <h4 className="text-white font-black uppercase tracking-tighter text-xl italic">Message Received</h4>
                    <p className="text-gray-500 text-[10px] uppercase mt-2 tracking-widest leading-relaxed">Your voice message has been received. Aman will review your message shortly.</p>
+                </div>
+             )}
+
+             {status === 'ERROR' && (
+                <div className="text-center animate-in zoom-in-95">
+                    <div className="w-20 h-20 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center mx-auto mb-6">
+                        <AlertTriangle className="w-10 h-10 text-red-500" />
+                    </div>
+                    <h4 className="text-white font-black uppercase tracking-tighter text-xl italic">Uplink Error</h4>
+                    <p className="text-red-500/70 text-[10px] uppercase mt-2 tracking-widest leading-relaxed px-4">{errorMessage}</p>
+                    <button onClick={() => setStatus('IDLE')} className="mt-6 px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-full text-[8px] font-black uppercase tracking-widest transition-all">Retry Synchronization</button>
                 </div>
              )}
           </div>
