@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, Waves, Volume2, Loader2, Sparkles, BookOpen, GraduationCap, Target, ExternalLink, FileDown, Globe, Play, Pause, Square, User, Bot, Microscope, Activity, Gauge, Headphones, X, CheckCircle2, Bookmark, ImageIcon, Info, HelpCircle, Volume1, VolumeX } from 'lucide-react';
-import { engineOceanQuery, generateSpeech, deepDiveQuery, generateFounderRemark, translateEngineResult, generateMissionImage } from '../services/geminiService';
+import { engineOceanQuery, generateSpeech, deepDiveQuery, generateFounderRemark, translateEngineResult, generateMissionImage, generateQuickRecap } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import { mockBackend } from '../services/mockBackend';
 
@@ -11,7 +11,9 @@ const LANGUAGES = [
   { name: 'Spanish', code: 'es' },
   { name: 'French', code: 'fr' },
   { name: 'German', code: 'de' },
-  { name: 'Japanese', code: 'ja' }
+  { name: 'Japanese', code: 'ja' },
+  { name: 'Malayalam', code: 'ml' },
+  { name: 'Kannada', code: 'kn' }
 ];
 
 const DIFFICULTIES = ['Standard', 'Adaptive', 'Specialized', 'Hardcore'];
@@ -62,7 +64,7 @@ const EngineOcean: React.FC = () => {
   const rafRef = useRef<number | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
-  const pastTopicsRef = useRef<{ query: string; recap: string }[]>([]);
+  const sessionHistoryRef = useRef<{ query: string; summary: string }[]>([]);
 
   useEffect(() => {
     return () => {
@@ -179,12 +181,6 @@ const EngineOcean: React.FC = () => {
 
   const isBookmarked = currentUser?.bookmarks?.some(b => b.title === query && b.type === 'OCEAN');
 
-  const isRelated = (newQuery: string, pastQuery: string) => {
-    const nq = newQuery.toLowerCase();
-    const pq = pastQuery.toLowerCase();
-    return nq.includes(pq) || pq.includes(nq);
-  };
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -225,12 +221,13 @@ const EngineOcean: React.FC = () => {
 
       const finalResult = { ...data, imageUrl };
       setResult(finalResult);
+      
+      // Store in session history for memory-based recaps
+      sessionHistoryRef.current.push({ query: processedQuery, summary: data.summary });
+
       mockBackend.incrementUsage(userId, 'OCEAN');
       window.dispatchEvent(new CustomEvent('trigger-demo-booking'));
       
-      const recap = data.humanized.split('.').slice(0, 2).join('. ') + '.';
-      pastTopicsRef.current.push({ query: processedQuery, recap });
-
       const lenis = (window as any).lenis;
       if (lenis && resultRef.current) {
         lenis.scrollTo(resultRef.current, { offset: -50 });
@@ -268,22 +265,24 @@ const EngineOcean: React.FC = () => {
 
     setAudioStatus('LOADING');
     try {
-      let textToRead = "";
-      if (choice === 'HUMANIZED') {
-        textToRead = result.humanized;
-      } else if (choice === 'DEEP_DIVE') {
-        textToRead = result.deepDive || "";
-      } else if (choice === 'BOTH') {
-        textToRead = `${result.humanized}. ${result.deepDive || ''}. ${result.summary}`;
+      let mainText = "";
+      if (choice === 'HUMANIZED') mainText = result.humanized;
+      else if (choice === 'DEEP_DIVE') mainText = result.deepDive || "";
+      else if (choice === 'BOTH') mainText = `${result.humanized}. ${result.deepDive || ''}. ${result.summary}`;
+
+      // Memory Logic: Check for related past queries
+      const relatedPastQuery = sessionHistoryRef.current.find(item => 
+        item.query !== query && 
+        (query.toLowerCase().includes(item.query.toLowerCase()) || item.query.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      let finalAudioText = mainText;
+      if (relatedPastQuery) {
+        const recap = await generateQuickRecap(relatedPastQuery.query, query);
+        finalAudioText = `${recap}. Now, for today's synthesis: ${mainText}`;
       }
 
-      // Memory Logic: Check for related past topics
-      const related = pastTopicsRef.current.find(p => p.query !== query && isRelated(query, p.query));
-      if (related) {
-        textToRead = `Recap of related study node: ${related.recap}. Now, delivering new synthesis: ${textToRead}`;
-      }
-
-      const buffer = await generateSpeech(textToRead, selectedLanguage);
+      const buffer = await generateSpeech(finalAudioText, selectedLanguage);
       if (buffer) {
         audioBufferRef.current = buffer;
         setAudioDuration(buffer.duration);

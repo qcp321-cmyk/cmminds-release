@@ -24,7 +24,8 @@ import {
   Clock,
   Trash2,
   ExternalLink,
-  Calendar
+  Calendar,
+  Calculator
 } from 'lucide-react';
 import ThreeBackground from './components/ThreeBackground';
 import ScenarioGenerator from './components/ScenarioGenerator';
@@ -40,6 +41,7 @@ import GlobalChat from './components/GlobalChat';
 import VisionModal from './components/VisionModal';
 import NeuralSync from './components/NeuralSync';
 import MissionPage from './components/MissionPage';
+import MicroSaaSWidgets from './components/MicroSaaSWidgets';
 import { mockBackend } from './services/mockBackend';
 import { UserProfile, Bookmark as BookmarkType } from './types';
 
@@ -217,6 +219,7 @@ const App: React.FC = () => {
   const [isVisionOpen, setIsVisionOpen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
   const [isMissionPageOpen, setIsMissionPageOpen] = useState(false);
+  const [isToolkitOpen, setIsToolkitOpen] = useState(false);
   const [engineMode, setEngineMode] = useState<'SCENARIO' | 'BEYOU' | 'OCEAN'>('SCENARIO');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -378,6 +381,7 @@ const App: React.FC = () => {
 
       {sharedPayload && <SharedViewer payload={sharedPayload} onClose={() => setSharedPayload(null)} />}
       {isMissionPageOpen && <MissionPage onClose={() => setIsMissionPageOpen(false)} />}
+      {isToolkitOpen && <MicroSaaSWidgets onClose={() => setIsToolkitOpen(false)} />}
 
       <nav className={`fixed top-0 left-0 w-full z-[100] px-4 sm:px-12 py-4 sm:py-6 flex justify-between items-center transition-all duration-500 ${isScrolled ? 'bg-black/80 backdrop-blur-lg border-b border-white/5 py-3 sm:py-4' : 'bg-transparent'}`}>
         <div className="flex items-center gap-3 sm:gap-4 cursor-pointer group" onClick={() => lenisRef.current?.scrollTo(0, { duration: 1.5 })}>
@@ -390,6 +394,7 @@ const App: React.FC = () => {
         <div className="hidden md:flex items-center gap-6 lg:gap-12">
           <button onClick={() => setIsMissionPageOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Mission</button>
           <button onClick={() => setIsProductOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Products</button>
+          <button onClick={() => setIsToolkitOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative flex items-center gap-2">Toolkit <Calculator className="w-3 h-3" /></button>
           <button onClick={() => scrollToSection('ocean')} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Discovery</button>
           <button onClick={() => setIsReferralOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Referrals</button>
         </div>
@@ -410,6 +415,7 @@ const App: React.FC = () => {
             <div className="flex flex-col items-center gap-10 text-center w-full max-w-xs">
                 <button onClick={() => { setIsNavOpen(false); setIsMissionPageOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Mission</button>
                 <button onClick={() => { setIsNavOpen(false); setIsProductOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Products</button>
+                <button onClick={() => { setIsNavOpen(false); setIsToolkitOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Toolkit</button>
                 <button onClick={() => { setIsNavOpen(false); scrollToSection('ocean'); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Discovery</button>
                 <button onClick={() => { setIsNavOpen(false); setIsReferralOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Referrals</button>
                 <div className="w-16 h-1 bg-cyan-600/30 rounded-full my-4"></div>
@@ -502,6 +508,7 @@ const App: React.FC = () => {
                  Admin Portal <span className="text-[7px] bg-red-600/10 text-red-500 px-1.5 py-0.5 rounded font-black tracking-widest group-hover:bg-red-500 group-hover:text-white transition-all">Secure</span>
               </button>
               <button onClick={() => setIsVisionOpen(true)} className="text-left hover:text-white transition-colors">Vision</button>
+              <button onClick={() => setIsToolkitOpen(true)} className="text-left hover:text-white transition-colors">Toolkit</button>
               <button onClick={() => setIsProductOpen(true)} className="text-left hover:text-white transition-colors">Products</button>
               <button onClick={() => scrollToSection('demo')} className="text-left hover:text-white transition-colors">Learning Lab</button>
             </div>

@@ -6,8 +6,8 @@ const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SCENARIO_MODEL = "gemini-3-pro-preview"; 
 const LITE_MODEL = "gemini-3-flash-preview";
-const ULTRA_LITE_MODEL = "gemini-flash-lite-latest"; 
-const SPEECH_MODEL = "gemini-2.5-flash-preview-tts";
+const ULTRA_LITE_MODEL = "gemini-flash-lite-latest"; // Updated to gemini-flash-lite for low-latency
+const SPEECH_MODEL = "gemini-2.5-flash-preview-tts"; // Explicitly using requested TTS model
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
 let sharedAudioCtx: AudioContext | null = null;
@@ -51,6 +51,21 @@ async function decodeAudioData(
   }
   return buffer;
 }
+
+export const generateQuickRecap = async (pastTopic: string, currentTopic: string): Promise<string> => {
+  const ai = getAI();
+  const prompt = `Generate a one-sentence fast recap linking the past study of "${pastTopic}" to the new inquiry of "${currentTopic}". Be extremely concise.`;
+  try {
+    const response = await ai.models.generateContent({
+      model: ULTRA_LITE_MODEL,
+      contents: prompt,
+      config: { temperature: 0.3 }
+    });
+    return response.text || "";
+  } catch (e) {
+    return "";
+  }
+};
 
 export const translateEngineResult = async (humanized: string, summary: string, targetLanguage: string, deepDive?: string): Promise<{ humanized: string, summary: string, deepDive?: string }> => {
   const ai = getAI();
@@ -180,7 +195,7 @@ export const deepDiveQuery = async (originalQuery: string, context: string): Pro
   
   try {
     const response = await ai.models.generateContent({
-      model: LITE_MODEL,
+      model: ULTRA_LITE_MODEL, // Using lite model for depth speed
       contents: prompt,
       config: { thinkingConfig: { thinkingBudget: 0 }, temperature: 0.2 }
     });
@@ -197,7 +212,7 @@ export const generateSpeech = async (text: string, targetLanguage: string = 'Eng
       .replace(/[*#_~`>\[\]\(\)\/\\|]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
-      .substring(0, 5000); // Increased character limit for long-form content
+      .substring(0, 5000); 
     
     const prompt = `Speak the following clearly in ${targetLanguage}: ${safeText}`;
 
@@ -267,7 +282,7 @@ export const generateAssessmentQuestions = async (details: BeYouUserDetails): Pr
   
   try {
     const response = await ai.models.generateContent({
-      model: LITE_MODEL,
+      model: ULTRA_LITE_MODEL,
       contents: prompt,
       config: {
         thinkingConfig: { thinkingBudget: 0 },
@@ -319,7 +334,7 @@ export const chatWithPersona = async (systemInstruction: string, history: ChatMe
   const contents = [...history.map(h => ({ role: h.role, parts: [{ text: h.text }] })), { role: 'user', parts: [{ text: message }] }];
   try {
     const response = await ai.models.generateContent({
-      model: LITE_MODEL,
+      model: ULTRA_LITE_MODEL,
       contents: contents,
       config: { systemInstruction: `${systemInstruction}. Challenge intellectual depth. No small talk.`, temperature: 0.7 }
     });
