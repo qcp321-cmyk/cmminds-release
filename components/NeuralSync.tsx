@@ -113,37 +113,37 @@ const NeuralSync: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-10 mb-16 sm:mb-24 relative z-50">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-10 mb-24 relative z-50">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
         
         {/* Card 1: Founder's Mandate */}
-        <div className="glass-panel rounded-[2rem] sm:rounded-[2.5rem] lg:rounded-[4rem] p-6 sm:p-8 lg:p-16 border border-white/10 relative overflow-hidden flex flex-col justify-center">
+        <div className="glass-panel rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-16 border border-white/10 relative overflow-hidden flex flex-col justify-center">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] to-transparent pointer-events-none"></div>
-            <div className="relative z-10 space-y-5 sm:space-y-6 lg:space-y-10">
-                <div className="relative inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full group/tooltip">
-                    <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400" />
-                    <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-cyan-400">The Architect's Vision</span>
+            <div className="relative z-10 space-y-6 sm:space-y-10">
+                <div className="relative inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full group/tooltip">
+                    <Zap className="w-4 h-4 text-cyan-400" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">The Architect's Vision</span>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-black/95 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-cyan-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl z-50">
                       Neural Roadmap Strategy
                     </div>
                 </div>
                 
-                <div className="space-y-3 sm:space-y-4">
-                    <h3 className="text-2xl sm:text-3xl lg:text-5xl xl:text-6xl font-black text-white italic tracking-tighter leading-[0.95] uppercase">
+                <div className="space-y-4">
+                    <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white italic tracking-tighter leading-[0.95] uppercase">
                         Ready to join the <span className="text-cyan-500">ed-revolution?</span>
                     </h3>
-                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-black text-gray-500 uppercase tracking-[0.3em] sm:tracking-[0.5em] italic">
+                    <p className="text-[10px] sm:text-xs font-black text-gray-500 uppercase tracking-[0.5em] italic">
                         Direct Uplink to Aman Kumar Singh
                     </p>
                 </div>
 
-                <div className="space-y-4 sm:space-y-6">
-                    <p className="text-gray-400 text-base sm:text-lg lg:text-xl font-light leading-relaxed italic border-l-2 sm:border-l-4 border-cyan-600 pl-4 sm:pl-6 lg:pl-10">
+                <div className="space-y-6">
+                    <p className="text-gray-400 text-lg sm:text-xl font-light leading-relaxed italic border-l-4 border-cyan-600 pl-6 sm:pl-10">
                         "We aren't just building a tool; we're establishing a foundation for the next generation. My vision is to eliminate the memory-based cycle and replace it with <span className="text-white font-bold">application and synthesis.</span>"
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 sm:gap-8 pt-2 sm:pt-4">
+                <div className="flex items-center gap-8 pt-4">
                     <div className="relative flex items-center gap-2 group/tooltip">
                         <ShieldCheck className="w-4 h-4 text-cyan-500/60" />
                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">Secure Protocol</span>
@@ -166,7 +166,7 @@ const NeuralSync: React.FC = () => {
         <div 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="glass-panel rounded-[2rem] sm:rounded-[2.5rem] lg:rounded-[4rem] p-6 sm:p-8 lg:p-12 border border-white/10 relative overflow-hidden group transition-all duration-500 hover:border-cyan-500/30 flex flex-col items-center justify-center min-h-[350px] sm:min-h-[400px] lg:min-h-[450px] tilt-card"
+          className="glass-panel rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-12 border border-white/10 relative overflow-hidden group transition-all duration-500 hover:border-cyan-500/30 flex flex-col items-center justify-center min-h-[450px] tilt-card"
         >
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-cyan-500/5 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
           

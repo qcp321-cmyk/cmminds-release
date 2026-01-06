@@ -32,36 +32,36 @@ const ImpactSection: React.FC<ImpactSectionProps> = ({ onRegister }) => {
   const currentFeature = FEATURES[activeIndex];
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-[#050505] to-black">
+    <section className="py-24 px-6 relative overflow-hidden border-t border-white/5 bg-gradient-to-b from-[#050505] to-black">
       {/* Background Elements */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-cyan-900/10 rounded-full blur-[80px] sm:blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none"></div>
       
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-10 sm:gap-16 md:gap-24">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16 md:gap-24">
         
         {/* Left: Text Content */}
-        <div className="flex-1 space-y-6 sm:space-y-8 text-center md:text-left relative z-10">
-           <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold leading-tight font-['Space_Grotesk']">
-             <span className="text-gray-400 text-sm sm:text-lg md:text-xl font-normal block mb-4 sm:mb-6 tracking-wide uppercase">We are curious to tell you...</span>
+        <div className="flex-1 space-y-8 text-center md:text-left relative z-10">
+           <h2 className="text-3xl md:text-5xl font-bold leading-tight font-['Space_Grotesk']">
+             <span className="text-gray-400 text-lg md:text-xl font-normal block mb-6 tracking-wide uppercase">We are curious to tell you...</span>
              98% of the time, we have experienced <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">more than 100% change</span> in 3 weeks.
            </h2>
-           <p className="text-base sm:text-xl text-gray-400 font-light leading-relaxed max-w-lg mx-auto md:mx-0">
+           <p className="text-xl text-gray-400 font-light leading-relaxed max-w-lg mx-auto md:mx-0">
              Through our unique approach to education and learning, we unlock the potential that traditional methods ignore.
            </p>
            
            <button 
              onClick={onRegister}
-             className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-white text-black rounded-full font-bold text-sm sm:text-lg hover:scale-105 transition-all flex flex-wrap items-center justify-center gap-2 sm:gap-3 mx-auto md:mx-0 shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden w-full sm:w-auto"
+             className="group relative px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all flex items-center gap-3 mx-auto md:mx-0 shadow-[0_0_30px_rgba(255,255,255,0.2)] overflow-hidden"
            >
-             <span className="relative z-10 text-center">Book your slot to our very first cohort</span>
-             <span className="relative z-10 px-2 py-0.5 bg-black text-white text-[8px] sm:text-[10px] font-bold uppercase tracking-wider rounded shrink-0">Coming Soon!</span>
-             <ArrowUpRight className="relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+             <span className="relative z-10">Book your slot to our very first cohort</span>
+             <span className="relative z-10 px-2 py-0.5 bg-black text-white text-[10px] font-bold uppercase tracking-wider rounded">Coming Soon!</span>
+             <ArrowUpRight className="relative z-10 w-5 h-5 ml-1" />
              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
            </button>
         </div>
 
         {/* Right: Swiping Card Stack */}
         <div className="flex-1 w-full flex justify-center perspective-1000">
-           <div className="relative w-full max-w-[280px] sm:max-w-sm aspect-[3.5/4.5] group/stack">
+           <div className="relative w-full max-w-sm aspect-[3.5/4.5] group/stack">
               
               {/* Stack Layer 3 (Bottom) */}
               <div className="absolute top-12 left-8 w-full h-full rounded-[2.5rem] opacity-30 scale-90 -z-30 transition-all duration-700 rotate-6 bg-gradient-to-br from-cyan-600 to-blue-700 blur-[1px]"></div>
@@ -87,12 +87,12 @@ const ImpactSection: React.FC<ImpactSectionProps> = ({ onRegister }) => {
                  <div key={activeIndex} className="relative z-10 w-full h-full flex flex-col items-center justify-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
                     {/* Icon Container */}
-                    <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center transition-colors duration-300 ${isHovered ? 'bg-white/5 border border-white/10' : 'bg-white/20 backdrop-blur-md shadow-inner border border-white/10'}`}>
-                       <currentFeature.icon className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
+                    <div className={`w-28 h-28 rounded-[2rem] flex items-center justify-center transition-colors duration-300 ${isHovered ? 'bg-white/5 border border-white/10' : 'bg-white/20 backdrop-blur-md shadow-inner border border-white/10'}`}>
+                       <currentFeature.icon className="w-12 h-12 text-white" />
                     </div>
                     
                     {/* Title */}
-                    <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-white leading-tight font-['Space_Grotesk'] drop-shadow-md px-4 sm:px-0">
+                    <h3 className="text-3xl md:text-4xl font-bold text-white leading-tight font-['Space_Grotesk'] drop-shadow-md">
                       {currentFeature.title}
                     </h3>
 

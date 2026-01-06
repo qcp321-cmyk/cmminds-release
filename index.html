@@ -1,72 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
-    
-    <!-- Primary Meta Tags -->
-    <title>CuriousMinds | Beyond Classrooms - AI-Powered Learning Revolution</title>
-    <meta name="title" content="CuriousMinds | Beyond Classrooms - AI-Powered Learning Revolution" />
-    <meta name="description" content="Transform your learning with AI-powered synthesis engines. Stop memorizing, start solving. Join the top 1% of global problem solvers with CuriousMinds." />
-    <meta name="keywords" content="AI learning, education technology, synthesis engine, problem solving, student success, career prediction, adaptive learning, online tutoring, EdTech" />
-    <meta name="author" content="CuriousMinds Inc." />
-    <meta name="robots" content="index, follow" />
-    <meta name="language" content="English" />
-    <meta name="revisit-after" content="7 days" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://curiousminds.ai/" />
-    <meta property="og:title" content="CuriousMinds | Beyond Classrooms" />
-    <meta property="og:description" content="Transform your learning with AI-powered synthesis engines. Stop memorizing, start solving." />
-    <meta property="og:image" content="https://curiousminds.ai/og-image.png" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:site_name" content="CuriousMinds" />
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://curiousminds.ai/" />
-    <meta property="twitter:title" content="CuriousMinds | Beyond Classrooms" />
-    <meta property="twitter:description" content="Transform your learning with AI-powered synthesis engines. Stop memorizing, start solving." />
-    <meta property="twitter:image" content="https://curiousminds.ai/og-image.png" />
-    
-    <!-- PWA & Mobile Optimization -->
-    <meta name="theme-color" content="#050505" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="CuriousMinds" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="format-detection" content="telephone=no" />
-    
-    <!-- International -->
-    <link rel="alternate" hreflang="en" href="https://curiousminds.ai/" />
-    <link rel="alternate" hreflang="x-default" href="https://curiousminds.ai/" />
-    
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://cdn.tailwindcss.com" />
-    <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com" />
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;600&family=League+Spartan:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>CuriousMinds | Beyond Classrooms</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;600&family=League+Spartan:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-      /* CSS Custom Properties for global responsiveness */
       :root {
         --app-height: 100%;
-        --safe-area-top: env(safe-area-inset-top, 0px);
-        --safe-area-right: env(safe-area-inset-right, 0px);
-        --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-        --safe-area-left: env(safe-area-inset-left, 0px);
       }
-      
       html {
         height: -webkit-fill-available;
-        scroll-behavior: smooth;
       }
       
       /* Lenis Recommended CSS */
@@ -87,7 +35,7 @@
       }
 
       body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: 'Inter', sans-serif;
         background-color: #050505;
         color: #ffffff;
         overflow-x: hidden;
@@ -96,35 +44,18 @@
         text-rendering: optimizeLegibility;
         min-height: 100vh;
         min-height: -webkit-fill-available;
-        min-height: var(--app-height);
-        padding-top: var(--safe-area-top);
-        padding-right: var(--safe-area-right);
-        padding-bottom: var(--safe-area-bottom);
-        padding-left: var(--safe-area-left);
       }
-      
       h1, h2, h3, h4, h5, h6 {
-        font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Space Grotesk', sans-serif;
       }
       
-      /* Global Custom Scrollbar */
+      /* Global Custom Scrollbar Hiding */
       .no-scrollbar::-webkit-scrollbar {
-        display: none;
+          display: none;
       }
       .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.1);
-        border-radius: 10px;
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
       }
       
       .glass-panel {
@@ -138,16 +69,7 @@
         touch-action: none;
       }
 
-      /* Responsive text utilities */
-      .text-responsive {
-        font-size: clamp(1rem, 2.5vw, 1.5rem);
-      }
-      
-      .heading-responsive {
-        font-size: clamp(2rem, 8vw, 6rem);
-      }
-
-      /* Custom animations */
+      /* Custom animations for better perception of speed */
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -162,106 +84,23 @@
         box-sizing: border-box;
       }
 
-      /* Safe area padding utilities */
+      /* Safe area padding for modern iPhones */
       .safe-pb {
-        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        padding-bottom: env(safe-area-inset-bottom);
       }
       .safe-pt {
-        padding-top: max(1rem, env(safe-area-inset-top));
-      }
-      .safe-pl {
-        padding-left: max(1rem, env(safe-area-inset-left));
-      }
-      .safe-pr {
-        padding-right: max(1rem, env(safe-area-inset-right));
-      }
-      
-      /* Fix for iOS button styling */
-      button, input, select, textarea {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        border-radius: 0;
-      }
-      
-      /* Reduced motion for accessibility */
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-      
-      /* High contrast mode support */
-      @media (prefers-contrast: high) {
-        .glass-panel {
-          background: rgba(0, 0, 0, 0.9);
-          border: 2px solid rgba(255, 255, 255, 0.5);
-        }
-      }
-      
-      /* Print styles */
-      @media print {
-        body {
-          background: white;
-          color: black;
-        }
-        .no-print {
-          display: none !important;
-        }
-      }
-      
-      /* Container queries support */
-      @supports (container-type: inline-size) {
-        .container-query {
-          container-type: inline-size;
-        }
-      }
-      
-      /* Smooth scroll for all anchor links */
-      html {
-        scroll-behavior: smooth;
-      }
-      
-      /* Focus visible for accessibility */
-      :focus-visible {
-        outline: 2px solid #22d3ee;
-        outline-offset: 2px;
-      }
-      
-      /* Selection color */
-      ::selection {
-        background: rgba(34, 211, 238, 0.3);
-        color: white;
+        padding-top: env(safe-area-inset-top);
       }
     </style>
-    
     <script>
       // Fix for mobile Safari 100vh issue
       const updateAppHeight = () => {
-        const vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
         document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
       };
       window.addEventListener('resize', updateAppHeight);
-      window.addEventListener('orientationchange', () => {
-        setTimeout(updateAppHeight, 100);
-      });
       updateAppHeight();
-      
-      // Detect touch device
-      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        document.documentElement.classList.add('touch-device');
-      }
-      
-      // Detect standalone mode (PWA)
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        document.documentElement.classList.add('standalone-mode');
-      }
     </script>
-    
-    <script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "@react-three/drei": "https://aistudiocdn.com/@react-three/drei@^10.7.7",
@@ -280,18 +119,8 @@
   }
 }
 </script>
-  </head>
+</head>
   <body>
     <div id="root"></div>
-    
-    <!-- Loading fallback -->
-    <noscript>
-      <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #050505; color: white; text-align: center; padding: 2rem;">
-        <div>
-          <h1 style="font-size: 2rem; margin-bottom: 1rem;">CuriousMinds</h1>
-          <p>Please enable JavaScript to experience CuriousMinds.</p>
-        </div>
-      </div>
-    </noscript>
   </body>
 </html>
