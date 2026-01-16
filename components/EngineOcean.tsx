@@ -47,6 +47,7 @@ const EngineOcean: React.FC = () => {
   const [audioVolume, setAudioVolume] = useState(1);
   const [audioSpeed, setAudioSpeed] = useState(1);
   const [showAudioControls, setShowAudioControls] = useState(false);
+  const [activeAudioChoice, setActiveAudioChoice] = useState<AudioChoice | null>(null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
@@ -74,14 +75,25 @@ const EngineOcean: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (gainNodeRef.current) {
-      gainNodeRef.current.gain.setTargetAtTime(audioVolume, audioCtxRef.current?.currentTime || 0, 0.05);
+    if ((audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && activeAudioChoice) {
+       // Auto-restart audio with new language if currently active
+       const timer = setTimeout(() => {
+           stopAudio();
+           handleSpeak(activeAudioChoice);
+       }, 500);
+       return () => clearTimeout(timer);
+    }
+  }, [selectedLanguage]);
+
+  useEffect(() => {
+    if (gainNodeRef.current && audioCtxRef.current) {
+      gainNodeRef.current.gain.setTargetAtTime(audioVolume, audioCtxRef.current.currentTime, 0.05);
     }
   }, [audioVolume]);
 
   useEffect(() => {
-    if (audioSourceRef.current) {
-      audioSourceRef.current.playbackRate.setTargetAtTime(audioSpeed, audioCtxRef.current?.currentTime || 0, 0.05);
+    if (audioSourceRef.current && audioCtxRef.current) {
+      audioSourceRef.current.playbackRate.setTargetAtTime(audioSpeed, audioCtxRef.current.currentTime, 0.05);
     }
   }, [audioSpeed]);
 
@@ -210,6 +222,7 @@ const EngineOcean: React.FC = () => {
     setResult(null);
     stopAudio();
     setShowAudioControls(false);
+    setActiveAudioChoice(null);
     
     mockBackend.trackEvent(userId, 'FORM_SUBMISSION', 'Engine Ocean inquiry', { query: processedQuery, grade, marks: currentMarks, difficulty, isSyllabusMode });
 
@@ -259,6 +272,7 @@ const EngineOcean: React.FC = () => {
   const handleSpeak = async (choice: AudioChoice) => {
     if (!result) return;
     setShowAudioSelector(false);
+    setActiveAudioChoice(choice);
     
     if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
     if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
@@ -279,11 +293,14 @@ const EngineOcean: React.FC = () => {
       let finalAudioText = mainText;
       if (relatedPastQuery) {
         const recap = await generateQuickRecap(relatedPastQuery.query, query);
-        finalAudioText = `${recap}. Now, for today's synthesis: ${mainText}`;
+        if (recap) finalAudioText = `${recap}. Now, for today's synthesis: ${mainText}`;
       }
 
       const buffer = await generateSpeech(finalAudioText, selectedLanguage);
       if (buffer) {
+        // Double check context state before starting
+        if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
+        
         audioBufferRef.current = buffer;
         setAudioDuration(buffer.duration);
         setShowAudioControls(true);
@@ -294,6 +311,7 @@ const EngineOcean: React.FC = () => {
       }
     } catch (e) {
       setAudioStatus('IDLE');
+      console.error(e);
     }
   };
 
