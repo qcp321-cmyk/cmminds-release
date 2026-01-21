@@ -90,59 +90,59 @@ const ProductCapabilities: React.FC<ProductCapabilitiesProps> = ({ onClose, onEx
       
       <button 
         onClick={onClose}
-        className="absolute top-6 right-6 z-[160] p-2.5 sm:p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md border border-white/10 group active:scale-90"
+        className="absolute top-6 right-6 z-[160] p-2 sm:p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-md border border-white/10 group active:scale-90"
       >
         <X className="w-5 h-5 sm:w-6 h-6 group-hover:rotate-90 transition-transform" />
       </button>
 
       <div ref={containerRef} className="w-full md:w-[60%] h-full overflow-y-auto no-scrollbar relative z-20 bg-[#050505] border-r border-white/5">
-        <div className="p-6 sm:p-10 md:p-14 lg:p-20 max-w-4xl mx-auto space-y-12 sm:space-y-16 pb-32">
+        <div className="p-5 sm:p-10 md:p-14 lg:p-20 max-w-4xl mx-auto space-y-12 sm:space-y-16 pb-32">
           
-          <div className="space-y-5 pt-12 md:pt-0">
-             <div className="flex items-center gap-2 text-cyan-400 font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em]">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+          <div className="space-y-4 sm:space-y-5 pt-12 md:pt-0 text-center md:text-left">
+             <div className="flex items-center justify-center md:justify-start gap-2 text-cyan-400 font-mono text-[9px] sm:text-xs uppercase tracking-[0.2em]">
+                <span className="w-1.5 h-1.5 sm:w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
                 Integrated Ecosystem
              </div>
-             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black font-['Space_Grotesk'] text-white leading-[1.1] tracking-tighter italic uppercase">
+             <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black font-['Space_Grotesk'] text-white leading-[1.1] tracking-tighter italic uppercase">
                 Three Engines. <br className="hidden sm:block"/>
                 <span className="text-gray-600">Infinite Synthesis.</span>
              </h2>
-             <p className="text-gray-400 max-w-2xl leading-relaxed text-sm sm:text-lg font-light">
+             <p className="text-gray-400 max-w-2xl leading-relaxed text-sm sm:text-lg font-light px-2 sm:px-0">
                 CuriousMinds deploys three distinct cognitive layers designed to eliminate classroom abstraction and deliver absolute neural clarity.
              </p>
           </div>
 
           {/* STACK - AUDITED FOR MOBILE HEIGHTS */}
-          <div className="relative py-12 px-2 flex justify-center h-[450px] sm:h-[500px] lg:h-[600px]">
-             <div className="relative w-full max-w-[300px] sm:max-w-md lg:max-w-lg h-full mx-auto">
-                <div className={`absolute top-10 left-8 w-full h-full rounded-[2.5rem] sm:rounded-[3.5rem] opacity-20 scale-[0.85] -z-30 transition-all duration-700 rotate-12 ${nextProduct.gradientClass} blur-[2px]`}></div>
-                <div className={`absolute top-5 left-4 w-full h-full rounded-[2.5rem] sm:rounded-[3.5rem] opacity-40 scale-[0.92] -z-20 transition-all duration-700 rotate-6 ${nextProduct.gradientClass} shadow-2xl`}></div>
+          <div className="relative py-8 sm:py-12 px-2 flex justify-center h-[400px] sm:h-[500px] lg:h-[600px]">
+             <div className="relative w-full max-w-[280px] sm:max-w-md lg:max-w-lg h-full mx-auto">
+                <div className={`absolute top-8 left-6 sm:top-10 sm:left-8 w-full h-full rounded-[2rem] sm:rounded-[3.5rem] opacity-20 scale-[0.85] -z-30 transition-all duration-700 rotate-12 ${nextProduct.gradientClass} blur-[2px]`}></div>
+                <div className={`absolute top-4 left-3 sm:top-5 sm:left-4 w-full h-full rounded-[2rem] sm:rounded-[3.5rem] opacity-40 scale-[0.92] -z-20 transition-all duration-700 rotate-6 ${nextProduct.gradientClass} shadow-2xl`}></div>
 
                 <div 
                   onMouseEnter={() => setIsHovered(true)}
                   onMouseLeave={() => setIsHovered(false)}
-                  className={`relative w-full h-full rounded-[2.5rem] sm:rounded-[3.5rem] p-8 sm:p-10 lg:p-14 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] overflow-hidden group transform hover:-translate-y-2 hover:rotate-0 transition-all duration-500 border border-white/5
+                  className={`relative w-full h-full rounded-[2rem] sm:rounded-[3.5rem] p-6 sm:p-10 lg:p-14 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] overflow-hidden group transform hover:-translate-y-2 hover:rotate-0 transition-all duration-500 border border-white/5
                     ${isHovered ? 'bg-black' : currentProduct.gradientClass}
                   `}
                 >
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-overlay pointer-events-none"></div>
                     
                     <div className="relative z-10 flex flex-col h-full justify-between">
-                      <div className="space-y-6">
-                          <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-white/10">
-                              <currentProduct.badgeIcon className={`w-4 h-4 ${isHovered ? 'text-white' : currentProduct.badgeColor}`} /> 
+                      <div className="space-y-4 sm:space-y-6">
+                          <div className="inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-white/10">
+                              <currentProduct.badgeIcon className={`w-3 h-3 sm:w-4 sm:h-4 ${isHovered ? 'text-white' : currentProduct.badgeColor}`} /> 
                               {currentProduct.badge}
                           </div>
                           
                           <div className="transition-all duration-500">
-                              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black font-['Space_Grotesk'] mb-3 leading-tight text-white tracking-tighter italic uppercase">
+                              <h3 className="text-2xl sm:text-4xl lg:text-5xl font-black font-['Space_Grotesk'] mb-2 sm:mb-3 leading-tight text-white tracking-tighter italic uppercase">
                                   {currentProduct.title}
                               </h3>
-                              <h4 className="text-xs sm:text-base lg:text-xl mb-6 font-medium text-white/70 uppercase tracking-widest">
+                              <h4 className="text-[10px] sm:text-base lg:text-xl mb-4 sm:mb-6 font-medium text-white/70 uppercase tracking-widest">
                                   {currentProduct.subtitle}
                               </h4>
                               
-                              <p className="text-sm sm:text-lg lg:text-xl leading-relaxed max-w-lg text-white/90 font-light line-clamp-5 sm:line-clamp-none">
+                              <p className="text-xs sm:text-lg lg:text-xl leading-relaxed max-w-lg text-white/90 font-light line-clamp-4 sm:line-clamp-none">
                                   {currentProduct.description}
                               </p>
                           </div>
@@ -151,15 +151,15 @@ const ProductCapabilities: React.FC<ProductCapabilitiesProps> = ({ onClose, onEx
                       <div className="flex flex-col gap-4 mt-auto">
                           <button 
                             onClick={() => onExplore(currentProduct.id)}
-                            className="w-full px-8 py-4 sm:py-5 rounded-full font-black transition-all flex items-center justify-center gap-3 shadow-2xl bg-white text-black active:scale-95 text-[10px] sm:text-xs lg:text-sm uppercase tracking-[0.3em]"
+                            className="w-full px-6 py-3.5 sm:py-5 rounded-full font-black transition-all flex items-center justify-center gap-3 shadow-2xl bg-white text-black active:scale-95 text-[9px] sm:text-xs lg:text-sm uppercase tracking-[0.3em]"
                           >
-                            Synchronize <ChevronRight className="w-5 h-5" />
+                            Synchronize <ChevronRight className="w-4 h-4 sm:w-5 h-5" />
                           </button>
                       </div>
                     </div>
 
                     {!isHovered && (
-                      <div className="absolute bottom-0 left-0 h-1.5 bg-white/10 w-full">
+                      <div className="absolute bottom-0 left-0 h-1 sm:h-1.5 bg-white/10 w-full">
                         <div key={activeIndex} className="h-full bg-white animate-[progress_3.5s_linear_forward]"></div>
                       </div>
                     )}
@@ -167,21 +167,21 @@ const ProductCapabilities: React.FC<ProductCapabilitiesProps> = ({ onClose, onEx
              </div>
           </div>
 
-          <div className="space-y-8 pt-10 border-t border-white/5">
-             <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-4 tracking-tighter uppercase italic">
-                <Layers className="w-6 h-6 text-gray-600" />
+          <div className="space-y-6 sm:space-y-8 pt-8 sm:pt-10 border-t border-white/5">
+             <h3 className="text-lg sm:text-2xl font-black text-white flex items-center gap-3 sm:gap-4 tracking-tighter uppercase italic">
+                <Layers className="w-5 h-5 sm:w-6 h-6 text-gray-600" />
                 Performance Matrix
              </h3>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="glass-panel p-6 sm:p-8 rounded-[2rem] border-l-4 border-cyan-500 hover:bg-white/5 transition-all group">
-                   <h4 className="text-lg font-black text-white mb-3 uppercase tracking-tighter italic">Neural Learning</h4>
-                   <p className="text-gray-500 text-xs sm:text-sm leading-relaxed font-light">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="glass-panel p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] border-l-4 border-cyan-500 hover:bg-white/5 transition-all group">
+                   <h4 className="text-base sm:text-lg font-black text-white mb-2 sm:mb-3 uppercase tracking-tighter italic leading-none">Neural Learning</h4>
+                   <p className="text-gray-500 text-[11px] sm:text-sm leading-relaxed font-light">
                       98.2% accuracy in predicting skill acquisition speed through the Synthesis layer.
                    </p>
                 </div>
-                <div className="glass-panel p-6 sm:p-8 rounded-[2rem] border-l-4 border-purple-500 hover:bg-white/5 transition-all group">
-                   <h4 className="text-lg font-black text-white mb-3 uppercase tracking-tighter italic">Career Pathing</h4>
-                   <p className="text-gray-500 text-xs sm:text-sm leading-relaxed font-light">
+                <div className="glass-panel p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] border-l-4 border-purple-500 hover:bg-white/5 transition-all group">
+                   <h4 className="text-base sm:text-lg font-black text-white mb-2 sm:mb-3 uppercase tracking-tighter italic leading-none">Career Pathing</h4>
+                   <p className="text-gray-500 text-[11px] sm:text-sm leading-relaxed font-light">
                       beYOU models future industry shifts and aligns your persona for high-value leadership nodes.
                    </p>
                 </div>

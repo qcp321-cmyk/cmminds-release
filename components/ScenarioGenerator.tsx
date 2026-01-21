@@ -346,59 +346,75 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
     setIsExporting(true);
     try {
       const founderInsight = await generateFounderRemark(data.explanation, 'SCENARIO');
-      const doc = new jsPDF();
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
-      
+      let currentY = 0;
+
+      const checkNewPage = (neededHeight: number) => {
+        if (currentY + neededHeight > pageHeight - margin) {
+          doc.addPage();
+          currentY = margin;
+          drawHeader();
+          return true;
+        }
+        return false;
+      };
+
       const drawHeader = () => {
-          doc.setFillColor(10, 15, 20); doc.rect(0, 0, pageWidth, 55, 'F');
-          doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(28); doc.text('CuriousMinds', margin, 30);
-          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(34, 211, 238); 
-          doc.text(`SYNTHESIS NODE // GRADE ${grade} // ID: ${Math.random().toString(36).substring(7).toUpperCase()}`, margin, 42);
-          doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.5); doc.line(margin, 46, margin + 40, 46);
+          doc.setFillColor(15, 23, 42); doc.rect(0, 0, pageWidth, 45, 'F');
+          doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.text('CuriousMinds', margin, 20);
+          doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(34, 211, 238); 
+          doc.text(`SYNTHESIS NODE // COGNITIVE MAPPING // GRADE ${grade}`, margin, 28);
+          doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.4); doc.line(margin, 32, margin + 45, 32);
+          currentY = 60;
       };
       
       const drawFooter = () => {
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(180, 180, 180);
-          doc.text('© 2025 CURIOUSMINDS INC. // PROPRIETARY COGNITIVE SYNTHESIS ARCHITECTURE', pageWidth / 2, pageHeight - 12, { align: 'center' });
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(150, 150, 150);
+          doc.text('© 2025 CURIOUSMINDS INC. // PROPRIETARY SYNTHESIS ARCHITECTURE', pageWidth / 2, pageHeight - 10, { align: 'center' });
       };
 
       drawHeader(); drawFooter();
-      let currentY = 70;
 
-      // Role
-      doc.setTextColor(34, 211, 238); doc.setFontSize(16); doc.setFont('helvetica', 'bold'); 
-      doc.text(data.role.toUpperCase(), margin, currentY); currentY += 12;
+      // Identity Header
+      doc.setTextColor(34, 211, 238); doc.setFontSize(14); doc.setFont('helvetica', 'bold'); 
+      doc.text(data.role.toUpperCase(), margin, currentY); currentY += 10;
 
-      // Explanation
-      doc.setTextColor(60, 60, 60); doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+      // Primary Explanation
+      doc.setTextColor(50, 50, 50); doc.setFontSize(10); doc.setFont('helvetica', 'normal');
       const sText = doc.splitTextToSize(data.explanation, contentWidth); 
-      doc.text(sText, margin, currentY); currentY += (sText.length * 6) + 15;
+      sText.forEach((line: string) => {
+          checkNewPage(6);
+          doc.text(line, margin, currentY);
+          currentY += 6;
+      });
+      currentY += 8;
 
-      // Roadmap Header
-      doc.setTextColor(100, 100, 100); doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text('MISSION STEPS', margin, currentY); currentY += 8;
+      // Steps Section
+      checkNewPage(20);
+      doc.setTextColor(120, 120, 120); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+      doc.text('OPERATIONAL ROADMAP', margin, currentY); currentY += 8;
 
-      // Steps
       data.steps.forEach((step, i) => {
-          if (currentY > pageHeight - 40) { doc.addPage(); drawHeader(); currentY = 70; }
-          doc.setFillColor(245, 245, 245); doc.roundedRect(margin - 2, currentY - 4, contentWidth + 4, 12, 1, 1, 'F');
-          doc.setTextColor(34, 211, 238); doc.setFontSize(10); doc.text(`${i+1}`, margin + 2, currentY + 3);
-          doc.setTextColor(40, 40, 40); doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-          doc.text(step, margin + 10, currentY + 3); currentY += 15;
+          checkNewPage(12);
+          doc.setFillColor(248, 250, 252); doc.roundedRect(margin - 2, currentY - 4, contentWidth + 4, 10, 1, 1, 'F');
+          doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.text(`${i+1}`, margin + 1, currentY + 2);
+          doc.setTextColor(40, 44, 52); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+          doc.text(step, margin + 10, currentY + 2); 
+          currentY += 12;
       });
 
-      // Founder Insight Section
-      currentY += 10;
-      if (currentY > pageHeight - 60) { doc.addPage(); drawHeader(); currentY = 70; }
-      doc.setFillColor(10, 15, 20); doc.roundedRect(margin - 5, currentY, contentWidth + 10, 35, 3, 3, 'F');
+      // Insight
+      currentY += 10; checkNewPage(40);
+      doc.setFillColor(15, 23, 42); doc.roundedRect(margin - 4, currentY, contentWidth + 8, 28, 2, 2, 'F');
       doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text('FOUNDER\'S INSIGHT', margin + 5, currentY + 12);
+      doc.text('THE ARCHITECT\'S INSIGHT', margin, currentY + 10);
       doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'italic');
-      const remarkLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth - 10);
-      doc.text(remarkLines, margin + 5, currentY + 20);
+      const remarkLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth);
+      doc.text(remarkLines, margin, currentY + 18);
 
       doc.save(`CuriousMinds_Synthesis_${data.role.replace(/\s+/g, '_')}.pdf`);
     } catch (e) { alert("Export failed."); } finally { setIsExporting(false); }
@@ -578,8 +594,8 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                           <span className="text-[9px] sm:text-xs font-bold uppercase tracking-tight sm:tracking-[0.2em]">Synthesis Complete</span>
                           <span className="text-[8px] sm:text-[9px] bg-cyan-400 text-black px-1.5 py-0.5 rounded font-black">{data.difficulty}</span>
                       </div>
-                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 w-full xl:w-auto">
-                        <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-3 py-2 rounded-lg sm:rounded-xl border border-white/10 shrink-0">
+                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 w-full xl:w-auto">
+                        <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-3 py-2 rounded-lg sm:rounded-xl border border-white/10 shrink-0 h-10">
                           <Globe className="w-3 h-3 text-cyan-500" />
                           <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)} className="bg-transparent text-[8px] sm:text-[10px] font-black uppercase text-white outline-none cursor-pointer">
                             {LANGUAGES.map(l => <option key={l.code} value={l.name} className="bg-black">{l.name}</option>)}
@@ -588,7 +604,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                         
                         <button 
                           onClick={handleSpeakMission} 
-                          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 min-w-[140px] sm:min-w-[200px] px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 ${
+                          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 sm:gap-3 min-w-[140px] sm:min-w-[180px] px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 h-10 ${
                             audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 
                             audioStatus === 'LOADING' ? 'bg-white/5 text-gray-400 border border-white/10 cursor-wait' :
                             'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/40'
@@ -603,7 +619,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                           <button 
                             onClick={handleBookmark}
-                            className={`flex-1 sm:flex-none p-3.5 rounded-xl border transition-all active:scale-90 ${isBookmarked ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}
+                            className={`flex-1 sm:flex-none p-3 h-10 flex items-center justify-center rounded-xl border transition-all active:scale-90 ${isBookmarked ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}
                             title="Bookmark results"
                           >
                              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
@@ -612,7 +628,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                           <div className="relative group/share flex-1 sm:flex-none">
                             <button 
                               onClick={() => setShowShareMenu(!showShareMenu)}
-                              className="w-full flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all shadow-xl active:scale-95"
+                              className="w-full h-10 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all shadow-xl active:scale-95"
                             >
                               <Share2 className="w-3 h-3" /> Share
                             </button>
@@ -629,7 +645,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                             )}
                           </div>
 
-                          <button onClick={handleExportPDF} disabled={isExporting} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white text-black rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-xl">
+                          <button onClick={handleExportPDF} disabled={isExporting} className="flex-1 sm:flex-none h-10 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-white text-black rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-xl">
                               {isExporting ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />} PDF
                           </button>
                         </div>
@@ -661,8 +677,8 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                           </div>
                         </div>
                         
-                        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/5">
-                          <div className="flex items-center gap-6">
+                        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                          <div className="flex flex-wrap items-center gap-4 sm:gap-8">
                             <div className="flex items-center gap-3 group">
                               <Volume2 className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
                               <input 
@@ -672,13 +688,13 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                               />
                             </div>
                             <div className="flex items-center gap-3">
-                              <Gauge className="w-4 h-4 text-gray-500" />
-                              <div className="flex bg-white/5 p-1 rounded-lg gap-1">
+                              <Gauge className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                              <div className="flex bg-white/5 p-0.5 sm:p-1 rounded-lg gap-0.5 sm:gap-1">
                                 {PLAYBACK_SPEEDS.map(speed => (
                                   <button 
                                     key={speed} 
                                     onClick={() => setAudioSpeed(speed)}
-                                    className={`px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black transition-all ${audioSpeed === speed ? 'bg-cyan-500 text-black' : 'text-gray-500 hover:text-white'}`}
+                                    className={`px-1.5 sm:px-2 py-0.5 rounded text-[7px] sm:text-[9px] font-black transition-all ${audioSpeed === speed ? 'bg-cyan-500 text-black' : 'text-gray-500 hover:text-white'}`}
                                   >
                                     {speed}x
                                   </button>
@@ -686,7 +702,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                               </div>
                             </div>
                           </div>
-                          <button onClick={() => { stopAudio(); setShowAudioControls(false); }} className="text-[8px] sm:text-[10px] font-black text-gray-600 hover:text-red-500 uppercase tracking-widest transition-colors">Terminate Link</button>
+                          <button onClick={() => { stopAudio(); setShowAudioControls(false); }} className="text-[8px] sm:text-[10px] font-black text-gray-600 hover:text-red-500 uppercase tracking-widest transition-colors ml-auto sm:ml-0">Terminate Link</button>
                         </div>
                       </div>
                     </div>
@@ -697,7 +713,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                       <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-cyan-400 tracking-widest bg-cyan-400/10 w-fit px-3 py-1.5 rounded-lg border border-cyan-400/20">
                          <User className="w-3 h-3" /> Humanized Scenario
                       </div>
-                      <div className="bg-white/5 border border-white/10 rounded-[1.2rem] sm:rounded-[2.5rem] p-5 sm:p-12 shadow-2xl overflow-x-hidden">
+                      <div className="bg-white/5 border border-white/10 rounded-[1.2rem] sm:rounded-[2.5rem] p-5 sm:p-10 lg:p-12 shadow-2xl overflow-x-hidden">
                          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                             <div className="flex-1 space-y-6 sm:space-y-8">
                                <div>
@@ -707,12 +723,14 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                                <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-gray-200 border-l-2 sm:border-l-4 border-cyan-500/30 pl-4 sm:pl-8 leading-relaxed font-light break-words">{data.explanation}</div>
                                <div className="space-y-3 sm:space-y-4">
                                   <p className="text-[8px] sm:text-[10px] font-black text-gray-500 uppercase tracking-widest">Roadmap</p>
-                                  {data.steps.map((step, i) => (
-                                    <div key={i} className="flex gap-3 sm:gap-4 items-start bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-                                       <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center text-[8px] sm:text-[10px] font-black shrink-0">{i+1}</span>
-                                       <p className="text-[11px] sm:text-sm text-white/80 leading-relaxed break-words">{step}</p>
-                                    </div>
-                                  ))}
+                                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                                    {data.steps.map((step, i) => (
+                                      <div key={i} className="flex gap-3 sm:gap-4 items-start bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                                        <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center text-[8px] sm:text-[10px] font-black shrink-0">{i+1}</span>
+                                        <p className="text-[11px] sm:text-sm text-white/80 leading-relaxed break-words">{step}</p>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                             </div>
                             <div className="w-full lg:w-72 xl:w-80 shrink-0">
@@ -738,8 +756,8 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
               )}
             </div>
           ) : (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-              {beYouStep === 'DETAILS' && (
+             // beYOU components stay the same as per prompt
+             beYouStep === 'DETAILS' ? (
                 <form onSubmit={startBeYouAssessment} className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <input required className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-5 py-3.5 sm:py-4 text-white outline-none text-xs sm:text-sm placeholder:text-gray-600 focus:border-purple-500/50" placeholder="Name" value={userDetails.name} onChange={e => setUserDetails({...userDetails, name: e.target.value})} />
@@ -747,13 +765,11 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                     <input required className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-5 py-3.5 sm:py-4 text-white outline-none text-xs sm:text-sm placeholder:text-gray-600 focus:border-purple-500/50" placeholder="Target Field" value={userDetails.goal} onChange={e => setUserDetails({...userDetails, goal: e.target.value})} />
                     <input required className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-5 py-3.5 sm:py-4 text-white outline-none text-xs sm:text-sm placeholder:text-gray-600 focus:border-purple-500/50" placeholder="Timeframe" value={userDetails.timeframe} onChange={e => setUserDetails({...userDetails, timeframe: e.target.value})} />
                   </div>
-                  <button disabled={loading} type="submit" className="w-full py-4 sm:py-5 bg-purple-600 hover:bg-purple-500 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-2xl uppercase tracking-widest">
+                  <button disabled={loading} type="submit" className="w-full py-4 sm:py-5 bg-purple-600 hover:bg-purple-500 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-xs text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-2xl uppercase tracking-widest">
                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Initialize Success Prediction</>}
                   </button>
                 </form>
-              )}
-
-              {beYouStep === 'ASSESSMENT' && (
+              ) : beYouStep === 'ASSESSMENT' ? (
                 <div className="space-y-6 sm:space-y-8 py-4 sm:py-10">
                    <div className="text-center">
                       <p className="text-[8px] sm:text-[10px] font-black text-purple-400 uppercase tracking-[0.3em] mb-3 sm:mb-4">Phase {currentQuestionIndex + 1} of 5</p>
@@ -764,12 +780,11 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                       {currentQuestionIndex === 4 ? 'Predict My Success' : 'Next Synapse'} <ArrowRight className="w-4 h-4" />
                    </button>
                 </div>
-              )}
-
-              {beYouStep === 'GENERATING' && <ProgressSynapse input={userDetails.goal} themeColor="#a855f7" />}
-
-              {beYouStep === 'RESULT' && personaData && (
-                <div className="min-h-[500px] h-[75vh] md:h-[650px] flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
+              ) : beYouStep === 'GENERATING' ? (
+                <ProgressSynapse input={userDetails.goal} themeColor="#a855f7" />
+              ) : personaData && (
+                <div className="min-h-[550px] h-[75vh] md:h-[650px] flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
+                   {/* beYOU result view stays same */}
                    <div className="w-full md:w-64 lg:w-80 bg-white/5 border border-white/10 rounded-[1.2rem] sm:rounded-[2.5rem] p-4 flex flex-col shrink-0">
                       <div className="flex items-center gap-3 mb-4 sm:mb-8 bg-purple-600/10 p-3 rounded-xl border border-purple-500/20">
                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shrink-0"><UserCircle2 className="w-5 h-5 sm:w-6 h-6 text-white" /></div>
@@ -779,23 +794,23 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                          </div>
                       </div>
                       <nav className="flex flex-row md:flex-col gap-2 flex-1 overflow-x-auto md:overflow-y-auto no-scrollbar pb-2 md:pb-0">
-                         <button onClick={() => setActiveTab('ROADMAP')} className={`flex-1 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-4 py-3 rounded-xl text-[9px] sm:text-xs font-bold transition-all shrink-0 ${activeTab === 'ROADMAP' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5'}`}>
+                         <button onClick={() => setActiveTab('ROADMAP')} className={`flex-1 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-xs font-bold transition-all shrink-0 ${activeTab === 'ROADMAP' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5'}`}>
                             <ScrollText className="w-4 h-4" /> Roadmap
                          </button>
-                         <button onClick={() => setActiveTab('CHAT')} className={`flex-1 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-4 py-3 rounded-xl text-[9px] sm:text-xs font-bold transition-all shrink-0 ${activeTab === 'CHAT' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5'}`}>
+                         <button onClick={() => setActiveTab('CHAT')} className={`flex-1 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-xs font-bold transition-all shrink-0 ${activeTab === 'CHAT' ? 'bg-purple-600 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5'}`}>
                             <MessageSquare className="w-4 h-4" /> Synapse
                          </button>
                       </nav>
-                      <button onClick={() => { if(confirm("Reset?")) setBeYouStep('DETAILS'); }} className="mt-2 md:mt-auto w-full py-2.5 text-[8px] sm:text-[10px] font-black uppercase text-gray-600 hover:text-red-500 flex items-center justify-center gap-2 transition-colors"><RefreshCw className="w-3 h-3" /> Restart</button>
+                      <button onClick={() => { if(confirm("Reset?")) setBeYouStep('DETAILS'); }} className="mt-2 md:mt-auto w-full py-2 text-[8px] sm:text-[10px] font-black uppercase text-gray-600 hover:text-red-500 flex items-center justify-center gap-2 transition-colors"><RefreshCw className="w-3 h-3" /> Restart</button>
                    </div>
                    
-                   <div className="flex-1 bg-black/40 border border-white/10 rounded-[1.2rem] sm:rounded-[2.5rem] p-5 sm:p-8 overflow-hidden flex flex-col relative" data-lenis-prevent>
+                   <div className="flex-1 bg-black/40 border border-white/10 rounded-[1.2rem] sm:rounded-[2.5rem] p-4 sm:p-8 overflow-hidden flex flex-col relative" data-lenis-prevent>
                       {activeTab === 'ROADMAP' ? (
-                        <div className="overflow-y-auto space-y-4 sm:space-y-6 pr-2 h-full custom-scrollbar animate-in slide-in-from-bottom-4">
+                        <div className="overflow-y-auto space-y-4 sm:space-y-6 pr-1 h-full custom-scrollbar animate-in slide-in-from-bottom-4">
                            <h4 className="text-base sm:text-xl font-bold text-white mb-3 sm:mb-6 flex items-center gap-2.5"><Target className="w-4 h-4 text-purple-400" /> Strategic Analysis</h4>
                            <div className="prose prose-invert prose-xs sm:prose-sm max-w-none text-gray-300 font-light leading-relaxed break-words pb-8">
                               {personaData.roadmap.split('\n').map((l, i) => (
-                                <p key={i} className={`mb-3 last:mb-0 ${l.startsWith('#') ? 'text-purple-400 font-bold uppercase tracking-widest mt-6' : ''}`}>
+                                <p key={i} className={`mb-3 last:mb-0 ${l.startsWith('#') ? 'text-purple-400 font-bold uppercase tracking-widest mt-6 first:mt-0' : ''}`}>
                                   {l.replace(/^#+\s*/, '')}
                                 </p>
                               ))}
@@ -806,7 +821,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                            <div className="flex-1 overflow-y-auto space-y-3 mb-3 pr-1 custom-scrollbar">
                               {chatHistory.map((m, i) => (
                                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                   <div className={`max-w-[90%] p-3 rounded-xl text-[10px] sm:text-xs leading-relaxed break-words ${m.role === 'user' ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-200'}`}>
+                                   <div className={`max-w-[85%] p-3 rounded-xl text-[10px] sm:text-xs leading-relaxed break-words ${m.role === 'user' ? 'bg-purple-600 text-white rounded-tr-none' : 'bg-white/10 text-gray-200 rounded-tl-none'}`}>
                                       {m.text}
                                    </div>
                                 </div>
@@ -815,15 +830,14 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                               <div ref={chatEndRef} className="h-4" />
                            </div>
                            <form onSubmit={handleChatSubmit} className="flex gap-2 shrink-0 pt-2 border-t border-white/5">
-                              <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Query your future self..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-purple-500/50" />
-                              <button disabled={chatLoading} type="submit" className="p-3 bg-purple-600 rounded-xl hover:bg-purple-500 transition-all shadow-lg active:scale-90"><Send className="w-4 h-4 text-white" /></button>
+                              <input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Query your future self..." className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-purple-500/50" />
+                              <button disabled={chatLoading} type="submit" className="p-2.5 sm:p-3 bg-purple-600 rounded-xl hover:bg-purple-500 transition-all shadow-lg active:scale-90"><Send className="w-4 h-4 text-white" /></button>
                            </form>
                         </div>
                       )}
                    </div>
                 </div>
-              )}
-            </div>
+              )
           )}
         </div>
       </div>

@@ -384,7 +384,7 @@ const App: React.FC = () => {
       {isToolkitOpen && <MicroSaaSWidgets onClose={() => setIsToolkitOpen(false)} />}
 
       <nav className={`fixed top-0 left-0 w-full z-[100] px-4 sm:px-12 py-4 sm:py-6 flex justify-between items-center transition-all duration-500 ${isScrolled ? 'bg-black/80 backdrop-blur-lg border-b border-white/5 py-3 sm:py-4' : 'bg-transparent'}`}>
-        <div className="flex items-center gap-3 sm:gap-4 cursor-pointer group" onClick={() => lenisRef.current?.scrollTo(0, { duration: 1.5 })}>
+        <div className="flex items-center gap-3 sm:gap-4 cursor-pointer group shrink-0" onClick={() => lenisRef.current?.scrollTo(0, { duration: 1.5 })}>
           <div className="w-8 h-8 sm:w-12 sm:h-12 bg-cyan-600 rounded-lg sm:rounded-2xl flex items-center justify-center shadow-2xl shadow-cyan-900/40 group-hover:scale-110 transition-transform">
             <BrainCircuit className="w-4 h-4 sm:w-7 sm:h-7 text-white" />
           </div>
@@ -392,14 +392,14 @@ const App: React.FC = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-6 lg:gap-12">
-          <button onClick={() => setIsMissionPageOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Mission</button>
-          <button onClick={() => setIsProductOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Products</button>
-          <button onClick={() => setIsToolkitOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative flex items-center gap-2">Toolkit <Calculator className="w-3 h-3" /></button>
-          <button onClick={() => scrollToSection('ocean')} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Discovery</button>
-          <button onClick={() => setIsReferralOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative">Referrals</button>
+          <button onClick={() => setIsMissionPageOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative whitespace-nowrap">Mission</button>
+          <button onClick={() => setIsProductOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative whitespace-nowrap">Products</button>
+          <button onClick={() => setIsToolkitOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative flex items-center gap-2 whitespace-nowrap">Toolkit <Calculator className="w-3 h-3" /></button>
+          <button onClick={() => scrollToSection('ocean')} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative whitespace-nowrap">Discovery</button>
+          <button onClick={() => setIsReferralOpen(true)} className="text-[8px] lg:text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 hover:text-white transition-colors relative whitespace-nowrap">Referrals</button>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-6 shrink-0">
           <button onClick={() => setIsRegistrationOpen(true)} className="bg-white text-black px-4 sm:px-8 py-2 sm:py-3 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] hover:bg-cyan-400 transition-all active:scale-95 shadow-2xl shrink-0">
             Join Now
           </button>
@@ -412,13 +412,13 @@ const App: React.FC = () => {
       {isNavOpen && (
         <div className="fixed inset-0 z-[200] bg-black/98 backdrop-blur-3xl flex flex-col items-center justify-center p-8 animate-in fade-in slide-in-from-top-4 duration-300 md:hidden" data-lenis-prevent>
             <button onClick={() => setIsNavOpen(false)} className="absolute top-6 right-6 p-4 bg-white/5 rounded-full text-white active:scale-90"><X className="w-7 h-7" /></button>
-            <div className="flex flex-col items-center gap-10 text-center w-full max-w-xs">
+            <div className="flex flex-col items-center gap-8 text-center w-full max-w-xs overflow-y-auto py-10 no-scrollbar">
                 <button onClick={() => { setIsNavOpen(false); setIsMissionPageOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Mission</button>
                 <button onClick={() => { setIsNavOpen(false); setIsProductOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Products</button>
                 <button onClick={() => { setIsNavOpen(false); setIsToolkitOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Toolkit</button>
                 <button onClick={() => { setIsNavOpen(false); scrollToSection('ocean'); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Discovery</button>
                 <button onClick={() => { setIsNavOpen(false); setIsReferralOpen(true); }} className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-white italic hover:text-cyan-400 transition-colors">Referrals</button>
-                <div className="w-16 h-1 bg-cyan-600/30 rounded-full my-4"></div>
+                <div className="w-16 h-1 bg-cyan-600/30 rounded-full my-2 shrink-0"></div>
                 <button onClick={() => { setIsNavOpen(false); setIsVisionOpen(true); }} className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-500 hover:text-white transition-colors">Vision</button>
                 {currentUser?.role === 'ADMIN' && (
                     <button onClick={() => { setIsNavOpen(false); setIsAdminOpen(true); }} className="text-[10px] font-black uppercase tracking-[0.5em] text-red-500 border border-red-500/20 px-6 py-2 rounded-full">Admin Node</button>
@@ -427,32 +427,32 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <section className="relative pt-32 sm:pt-32 md:pt-40 pb-20 sm:pb-32 px-4 sm:px-6 overflow-hidden min-h-[80vh] sm:min-h-0 flex flex-col justify-center">
+      <section className="relative pt-32 sm:pt-32 md:pt-40 pb-20 sm:pb-32 px-4 sm:px-6 overflow-hidden min-h-[85vh] sm:min-h-0 flex flex-col justify-center">
         <div className="max-w-7xl mx-auto text-center relative z-10 flex flex-col items-center">
           <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-white/5 border border-white/10 rounded-full mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400" />
             <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-cyan-400">Education Redefined</span>
           </div>
           
-          <h2 className="text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[1.1] sm:leading-[0.85] mb-6 sm:mb-10 italic uppercase px-2 max-w-6xl mx-auto transition-all duration-1000 animate-in fade-in zoom-in-95" key={phraseIndex}>
+          <h2 className="text-3xl xs:text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[1.1] sm:leading-[0.85] mb-6 sm:mb-10 italic uppercase px-2 max-w-6xl mx-auto transition-all duration-1000 animate-in fade-in zoom-in-95" key={phraseIndex}>
             <span className="text-white block sm:inline">{HERO_PHRASES[phraseIndex].white}</span> <br className="hidden sm:block"/>
             <span style={{ color: curiosityColor }} className="drop-shadow-[0_0_20px_rgba(255,255,255,0.05)] block sm:inline">
               {HERO_PHRASES[phraseIndex].color}
             </span>
           </h2>
           
-          <p className="text-gray-400 max-w-4xl mx-auto text-xs sm:text-lg md:text-xl lg:text-2xl font-light leading-relaxed mb-8 sm:mb-12 px-6 italic animate-fade-up">
+          <p className="text-gray-400 max-w-3xl mx-auto text-[11px] sm:text-lg md:text-xl lg:text-2xl font-light leading-relaxed mb-8 sm:mb-12 px-4 italic animate-fade-up">
             Traditional education focuses on memorization. We focus on synthesis. CuriousMinds is the catalyst for those who want to solve real-world problems.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 px-6 w-full max-w-4xl mx-auto animate-fade-up">
-            <button onClick={() => scrollToSection('demo')} className="w-full sm:w-auto px-8 sm:px-12 py-3.5 sm:py-5 bg-cyan-600 rounded-full font-black text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-cyan-500 transition-all shadow-2xl active:scale-95 group flex items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 px-4 w-full max-w-4xl mx-auto animate-fade-up">
+            <button onClick={() => scrollToSection('demo')} className="w-full sm:w-auto px-6 sm:px-12 py-3.5 sm:py-5 bg-cyan-600 rounded-full font-black text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-cyan-500 transition-all shadow-2xl active:scale-95 group flex items-center justify-center gap-3">
               Explore Engines <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button onClick={() => setIsDemoBookingOpen(true)} className="w-full sm:w-auto px-8 sm:px-12 py-3.5 sm:py-5 bg-white text-black rounded-full font-black text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-cyan-400 transition-all shadow-[0_0_40px_rgba(255,255,255,0.15)] active:scale-95 flex items-center justify-center gap-3">
+            <button onClick={() => setIsDemoBookingOpen(true)} className="w-full sm:w-auto px-6 sm:px-12 py-3.5 sm:py-5 bg-white text-black rounded-full font-black text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-cyan-400 transition-all shadow-[0_0_40px_rgba(255,255,255,0.15)] active:scale-95 flex items-center justify-center gap-3">
               Book Free Demo (45min) <Calendar className="w-4 h-4" />
             </button>
-            <button onClick={() => setIsVisionOpen(true)} className="w-full sm:w-auto px-8 sm:px-12 py-3.5 sm:py-5 bg-white/5 border border-white/10 rounded-full font-black text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-3 active:scale-95 backdrop-blur-xl">
+            <button onClick={() => setIsVisionOpen(true)} className="w-full sm:w-auto px-6 sm:px-12 py-3.5 sm:py-5 bg-white/5 border border-white/10 rounded-full font-black text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] hover:bg-white/10 transition-all flex items-center justify-center gap-3 active:scale-95 backdrop-blur-xl">
               Vision <ArrowUpRight className="w-4 h-4" />
             </button>
           </div>
@@ -482,8 +482,8 @@ const App: React.FC = () => {
         <NeuralSync />
       </div>
 
-      <footer className="py-16 sm:py-24 md:py-32 border-t border-white/5 bg-black/90 relative z-[100] backdrop-blur-2xl px-4">
-        <div className="max-w-7xl mx-auto px-2 sm:px-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-16 lg:gap-32">
+      <footer className="py-16 sm:py-24 md:py-32 border-t border-white/5 bg-black/90 relative z-[100] backdrop-blur-2xl px-6 sm:px-12">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-16 lg:gap-24">
           <div className="sm:col-span-2 space-y-8 sm:space-y-12">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 sm:w-14 sm:h-14 bg-cyan-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-3xl shadow-cyan-900/40">
@@ -502,7 +502,7 @@ const App: React.FC = () => {
             </button>
           </div>
           <div>
-            <h4 className="text-[9px] sm:text-[11px] font-black text-gray-600 uppercase tracking-[0.4em] sm:tracking-[0.6em] mb-6 sm:mb-12">Navigation</h4>
+            <h4 className="text-[9px] sm:text-[11px] font-black text-gray-600 uppercase tracking-[0.4em] sm:tracking-[0.6em] mb-6 sm:mb-10">Navigation</h4>
             <div className="flex flex-col gap-4 sm:gap-6 text-[10px] sm:text-xs font-black text-gray-500 uppercase tracking-widest">
               <button onClick={() => setIsAdminOpen(true)} className="text-left text-cyan-500 hover:text-white transition-all flex items-center gap-3 group">
                  Admin Portal <span className="text-[7px] bg-red-600/10 text-red-500 px-1.5 py-0.5 rounded font-black tracking-widest group-hover:bg-red-500 group-hover:text-white transition-all">Secure</span>
@@ -514,7 +514,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div>
-            <h4 className="text-[9px] sm:text-[11px] font-black text-gray-600 uppercase tracking-[0.4em] sm:tracking-[0.6em] mb-6 sm:mb-12">Connect</h4>
+            <h4 className="text-[9px] sm:text-[11px] font-black text-gray-600 uppercase tracking-[0.4em] sm:tracking-[0.6em] mb-6 sm:mb-10">Connect</h4>
             <div className="flex flex-col gap-4 sm:gap-6 text-[10px] sm:text-xs font-black text-gray-500 uppercase tracking-widest">
               <a href="https://www.linkedin.com/company/9curiousminds/?viewAsMember=true" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-all flex items-center gap-3 group">LinkedIn <ArrowUpRight className="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity" /></a>
               <a href="https://wa.me/917970750727" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-all flex items-center gap-3 group">WhatsApp <MessageCircle className="w-3 h-3 opacity-30 group-hover:opacity-100 transition-opacity" /></a>
@@ -523,7 +523,7 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-2 sm:px-10 mt-16 sm:mt-32 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
+        <div className="max-w-7xl mx-auto mt-16 sm:mt-32 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
           <p className="text-[8px] sm:text-[10px] text-gray-700 font-mono leading-relaxed uppercase tracking-[0.2em]">
             © 2025 CuriousMinds Inc.
           </p>

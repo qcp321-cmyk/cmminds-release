@@ -122,7 +122,7 @@ const NeuralSync: React.FC = () => {
             <div className="relative z-10 space-y-6 sm:space-y-10">
                 <div className="relative inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full group/tooltip">
                     <Zap className="w-4 h-4 text-cyan-400" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">The Architect's Vision</span>
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">The Architect's Vision</span>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-1.5 bg-black/95 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-cyan-400 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl z-50">
                       Neural Roadmap Strategy
                     </div>
@@ -132,18 +132,18 @@ const NeuralSync: React.FC = () => {
                     <h3 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white italic tracking-tighter leading-[0.95] uppercase">
                         Ready to join the <span className="text-cyan-500">ed-revolution?</span>
                     </h3>
-                    <p className="text-[10px] sm:text-xs font-black text-gray-500 uppercase tracking-[0.5em] italic">
+                    <p className="text-[9px] sm:text-xs font-black text-gray-500 uppercase tracking-[0.5em] italic">
                         Direct Uplink to Aman Kumar Singh
                     </p>
                 </div>
 
                 <div className="space-y-6">
-                    <p className="text-gray-400 text-lg sm:text-xl font-light leading-relaxed italic border-l-4 border-cyan-600 pl-6 sm:pl-10">
+                    <p className="text-gray-400 text-base sm:text-xl font-light leading-relaxed italic border-l-4 border-cyan-600 pl-6 sm:pl-10">
                         "We aren't just building a tool; we're establishing a foundation for the next generation. My vision is to eliminate the memory-based cycle and replace it with <span className="text-white font-bold">application and synthesis.</span>"
                     </p>
                 </div>
 
-                <div className="flex items-center gap-8 pt-4">
+                <div className="flex items-center gap-6 sm:gap-8 pt-4">
                     <div className="relative flex items-center gap-2 group/tooltip">
                         <ShieldCheck className="w-4 h-4 text-cyan-500/60" />
                         <span className="text-[9px] font-black uppercase tracking-widest text-gray-600">Secure Protocol</span>
@@ -184,8 +184,8 @@ const NeuralSync: React.FC = () => {
                       </div>
                    </div>
                    
-                   <div className="space-y-4">
-                      <h4 className="text-2xl sm:text-3xl font-black text-white italic uppercase tracking-tighter">Establish <span className="text-cyan-500">Uplink</span></h4>
+                   <div className="space-y-4 px-4">
+                      <h4 className="text-2xl sm:text-3xl font-black text-white italic uppercase tracking-tighter leading-none">Establish <span className="text-cyan-500">Uplink</span></h4>
                       <p className="text-gray-500 text-[10px] sm:text-xs uppercase leading-relaxed tracking-widest max-w-[240px] mx-auto font-medium">
                         Hold cursor here to transmit a <span className="text-white font-bold">30-second briefing</span> directly to our founder.
                       </p>
@@ -213,9 +213,9 @@ const NeuralSync: React.FC = () => {
              )}
 
              {status === 'RECORDING' && (
-                <div className="text-center w-full space-y-8">
+                <div className="text-center w-full space-y-8 px-4">
                    <div className="flex items-end justify-center gap-1.5 h-16 sm:h-20">
-                      {[...Array(18)].map((_, i) => (
+                      {[...Array(15)].map((_, i) => (
                         <div key={i} className="w-1.5 sm:w-2 bg-red-500 rounded-full animate-wave" style={{ height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.04}s` }}></div>
                       ))}
                    </div>
@@ -225,7 +225,7 @@ const NeuralSync: React.FC = () => {
                    </div>
                    <button 
                      onClick={stopRecording}
-                     className="px-10 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_20px_40px_rgba(220,38,38,0.3)] flex items-center gap-3 mx-auto active:scale-95"
+                     className="w-full sm:w-auto px-10 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_20px_40px_rgba(220,38,38,0.3)] flex items-center justify-center gap-3 mx-auto active:scale-95"
                    >
                      <Square className="w-4 h-4 fill-current" /> Terminate and Send
                    </button>
@@ -233,8 +233,8 @@ const NeuralSync: React.FC = () => {
              )}
 
              {status === 'FORM' && (
-                <form onSubmit={handleSubmit} className="w-full space-y-5 animate-in slide-in-from-bottom-4">
-                   <div className="text-center mb-6">
+                <form onSubmit={handleSubmit} className="w-full space-y-5 animate-in slide-in-from-bottom-4 px-4">
+                   <div className="text-center mb-4 sm:mb-6">
                       <div className="inline-flex items-center gap-2 text-green-400 text-[10px] font-black uppercase tracking-widest bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">
                          <CheckCircle2 className="w-4 h-4" /> Frequency Captured
                       </div>
@@ -265,13 +265,13 @@ const NeuralSync: React.FC = () => {
              )}
 
              {status === 'SUCCESS' && (
-                <div className="text-center animate-in zoom-in-95 space-y-8">
+                <div className="text-center animate-in zoom-in-95 space-y-8 px-4">
                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-green-500/10 border border-green-500/40 flex items-center justify-center mx-auto shadow-[0_0_80px_rgba(34,197,94,0.15)] relative">
                       <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping opacity-20"></div>
                       <ShieldCheck className="w-12 h-12 sm:w-16 sm:h-16 text-green-500" />
                    </div>
                    <div className="space-y-3">
-                      <h4 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter italic">Signal Delivered</h4>
+                      <h4 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter italic leading-none">Signal Delivered</h4>
                       <p className="text-gray-500 text-[10px] sm:text-xs uppercase font-medium tracking-widest leading-relaxed max-w-[280px] mx-auto">
                         Your transmission has been ingested into the architectural node. Aman will review shortly.
                       </p>
@@ -296,8 +296,10 @@ const NeuralSync: React.FC = () => {
           transform-style: preserve-3d;
           perspective: 1200px;
         }
-        .tilt-card:hover {
-          transform: rotateX(8deg) rotateY(-2deg) translateY(-8px);
+        @media (min-width: 1024px) {
+          .tilt-card:hover {
+            transform: rotateX(8deg) rotateY(-2deg) translateY(-8px);
+          }
         }
       `}</style>
     </div>

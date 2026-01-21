@@ -40,6 +40,9 @@ const EngineOcean: React.FC = () => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [result, setResult] = useState<{ humanized: string, summary: string, grounding: any[], deepDive?: string, imageUrl?: string } | null>(null);
   
+  // Storage for original results to ensure high-quality translations
+  const originalResultRef = useRef<{ humanized: string, summary: string, deepDive?: string } | null>(null);
+
   // Advanced Audio State
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('IDLE');
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
@@ -74,16 +77,49 @@ const EngineOcean: React.FC = () => {
     };
   }, []);
 
+  // Fix: Unified Language Change Effect (Translates text AND restarts audio)
   useEffect(() => {
-    if ((audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && activeAudioChoice) {
-       // Auto-restart audio with new language if currently active
-       const timer = setTimeout(() => {
-           stopAudio();
-           handleSpeak(activeAudioChoice);
-       }, 500);
-       return () => clearTimeout(timer);
-    }
+    if (!result || !originalResultRef.current) return;
+
+    const syncLanguage = async () => {
+        // Stop current audio
+        stopAudio();
+
+        if (selectedLanguage === 'English') {
+            setResult(prev => prev ? { 
+                ...prev, 
+                humanized: originalResultRef.current!.humanized,
+                summary: originalResultRef.current!.summary,
+                deepDive: originalResultRef.current!.deepDive
+            } : null);
+            return;
+        }
+
+        setIsTranslating(true);
+        try {
+            const translated = await translateEngineResult(
+                originalResultRef.current!.humanized,
+                originalResultRef.current!.summary,
+                selectedLanguage,
+                originalResultRef.current!.deepDive
+            );
+            setResult(prev => prev ? { ...prev, ...translated } : null);
+        } catch (e) {
+            console.error("Translation error:", e);
+        } finally {
+            setIsTranslating(false);
+        }
+    };
+
+    syncLanguage();
   }, [selectedLanguage]);
+
+  // Restart audio once translation/result is updated
+  useEffect(() => {
+    if (activeAudioChoice && result && !isTranslating && !loading) {
+        handleSpeak(activeAudioChoice);
+    }
+  }, [result, isTranslating]);
 
   useEffect(() => {
     if (gainNodeRef.current && audioCtxRef.current) {
@@ -220,6 +256,7 @@ const EngineOcean: React.FC = () => {
 
     setLoading(true);
     setResult(null);
+    setSelectedLanguage('English'); // Reset language on new search
     stopAudio();
     setShowAudioControls(false);
     setActiveAudioChoice(null);
@@ -234,8 +271,8 @@ const EngineOcean: React.FC = () => {
 
       const finalResult = { ...data, imageUrl };
       setResult(finalResult);
+      originalResultRef.current = { humanized: data.humanized, summary: data.summary, deepDive: data.deepDive };
       
-      // Store in session history for memory-based recaps
       sessionHistoryRef.current.push({ query: processedQuery, summary: data.summary });
 
       mockBackend.incrementUsage(userId, 'OCEAN');
@@ -256,6 +293,7 @@ const EngineOcean: React.FC = () => {
     try {
       const dd = await deepDiveQuery(query, result.humanized);
       setResult(prev => prev ? { ...prev, deepDive: dd } : null);
+      if (originalResultRef.current) originalResultRef.current.deepDive = dd;
     } catch (e) { alert("Neural expansion failed."); } finally { setDeepDiveLoading(false); }
   };
 
@@ -271,20 +309,21 @@ const EngineOcean: React.FC = () => {
 
   const handleSpeak = async (choice: AudioChoice) => {
     if (!result) return;
+    if (audioStatus === 'LOADING') return; 
+    
     setShowAudioSelector(false);
     setActiveAudioChoice(choice);
     
     if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({sampleRate: 24000});
     if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
-
     setAudioStatus('LOADING');
+
     try {
       let mainText = "";
       if (choice === 'HUMANIZED') mainText = result.humanized;
       else if (choice === 'DEEP_DIVE') mainText = result.deepDive || "";
       else if (choice === 'BOTH') mainText = `${result.humanized}. ${result.deepDive || ''}. ${result.summary}`;
 
-      // Memory Logic: Check for related past queries
       const relatedPastQuery = sessionHistoryRef.current.find(item => 
         item.query !== query && 
         (query.toLowerCase().includes(item.query.toLowerCase()) || item.query.toLowerCase().includes(query.toLowerCase()))
@@ -298,7 +337,6 @@ const EngineOcean: React.FC = () => {
 
       const buffer = await generateSpeech(finalAudioText, selectedLanguage);
       if (buffer) {
-        // Double check context state before starting
         if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
         
         audioBufferRef.current = buffer;
@@ -307,11 +345,9 @@ const EngineOcean: React.FC = () => {
         startAudioNode(buffer, 0);
       } else {
         setAudioStatus('IDLE');
-        alert("Audio synthesis failed.");
       }
     } catch (e) {
       setAudioStatus('IDLE');
-      console.error(e);
     }
   };
 
@@ -361,7 +397,7 @@ const EngineOcean: React.FC = () => {
             return <pre key={i} className="bg-black/60 p-4 rounded-xl font-mono text-[10px] sm:text-xs text-cyan-500/80 overflow-x-auto my-4 border border-cyan-500/10 shadow-inner">{line}</pre>;
         }
 
-        return <p key={i} className="mb-6 text-gray-300 leading-relaxed font-light text-sm sm:text-base">{cleaned}</p>;
+        return <p key={i} className="mb-6 text-gray-300 leading-relaxed font-light text-sm sm:text-base break-words">{cleaned}</p>;
     });
   };
 
@@ -371,7 +407,7 @@ const EngineOcean: React.FC = () => {
     
     try {
       const founderInsight = await generateFounderRemark(result.humanized, 'OCEAN');
-      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', putOnlyUsedFonts: true });
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
@@ -389,78 +425,101 @@ const EngineOcean: React.FC = () => {
       };
 
       const drawHeader = () => {
-        doc.setFillColor(10, 15, 20); doc.rect(0, 0, pageWidth, 50, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(26); doc.text('CuriousMinds', margin, 22);
-        doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-        doc.text('ENGINE OCEAN UPLINK // UNIVERSITY GRADE', margin, 30);
-        doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.5); doc.line(margin, 34, margin + 40, 34);
-        currentY = 65;
+        doc.setFillColor(10, 15, 20); doc.rect(0, 0, pageWidth, 45, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.text('CuriousMinds', margin, 20);
+        doc.setTextColor(34, 211, 238); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.text('ENGINE OCEAN UPLINK // ARCHITECTURAL SYNTHESIS', margin, 28);
+        doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.4); doc.line(margin, 32, margin + 45, 32);
+        currentY = 60;
       };
 
       const drawFooter = () => {
-        doc.setFontSize(8); doc.setTextColor(150, 150, 150);
-        doc.text('© 2025 CURIOUSMINDS INC. // SYNTHESIS ARCHITECTURE', pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.setFontSize(7); doc.setTextColor(160, 160, 160);
+        doc.text(`© 2025 CURIOUSMINDS INC. // NODE REF: ${Math.random().toString(36).substring(7).toUpperCase()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       };
 
       drawHeader(); drawFooter();
       
-      doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+      // Title
+      doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
       const titleLines = doc.splitTextToSize(query.toUpperCase(), contentWidth);
-      doc.text(titleLines, margin, currentY); currentY += (titleLines.length * 8) + 10;
+      doc.text(titleLines, margin, currentY); currentY += (titleLines.length * 8) + 8;
 
-      doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-      const briefingLines = doc.splitTextToSize(result.humanized.replace(/[*#_~`>\[\]\(\)\/\\]/g, ''), contentWidth);
-      briefingLines.forEach((line: string) => {
-        checkNewPage(6); doc.text(line, margin, currentY); currentY += 6;
+      // Body Content
+      const sections = result.humanized.split('\n');
+      doc.setFontSize(10);
+      
+      sections.forEach(section => {
+        const cleaned = section.replace(/[*#_~`>\[\]\(\)\/\\]/g, '').trim();
+        if (!cleaned) return;
+
+        const isH = cleaned.match(/^[A-Z\s:]{4,40}$/);
+        if (isH) {
+           checkNewPage(15);
+           currentY += 5;
+           doc.setTextColor(34, 211, 238); doc.setFont('helvetica', 'bold');
+           doc.text(cleaned, margin, currentY);
+           currentY += 8;
+           doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal');
+        } else {
+           const lines = doc.splitTextToSize(cleaned, contentWidth);
+           lines.forEach((line: string) => {
+             checkNewPage(6);
+             doc.text(line, margin, currentY);
+             currentY += 6;
+           });
+           currentY += 2;
+        }
       });
 
-      currentY += 15; checkNewPage(40);
-      doc.setFillColor(10, 15, 20); doc.roundedRect(margin - 5, currentY, contentWidth + 10, 35, 3, 3, 'F');
+      // Insight
+      currentY += 10; checkNewPage(45);
+      doc.setFillColor(15, 20, 25); doc.roundedRect(margin - 4, currentY, contentWidth + 8, 30, 2, 2, 'F');
       doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text('FOUNDER\'S MOTO', margin + 5, currentY + 10);
+      doc.text('FOUNDER\'S SYNTHESIS', margin, currentY + 10);
       doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'italic');
-      const quoteLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth - 10);
-      doc.text(quoteLines, margin + 5, currentY + 18);
+      const quoteLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth);
+      doc.text(quoteLines, margin, currentY + 18);
 
-      doc.save(`CuriousMinds_Ocean_${query.replace(/\s+/g, '_').substring(0, 20)}.pdf`);
-    } catch (e) { alert("PDF generation failed."); } finally { setIsExporting(false); }
+      doc.save(`CuriousMinds_Synthesis_${query.replace(/\s+/g, '_').substring(0, 30)}.pdf`);
+    } catch (e) { alert("PDF export failed."); } finally { setIsExporting(false); }
   };
 
   return (
-    <section id="ocean" className="py-12 sm:py-32 px-1 sm:px-4 bg-gradient-to-b from-black to-[#050505] relative overflow-hidden">
+    <section id="ocean" className="py-12 sm:py-24 md:py-32 px-2 sm:px-4 bg-gradient-to-b from-black to-[#050505] relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent"></div>
       
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-8 sm:mb-16">
+        <div className="text-center mb-8 sm:mb-16 px-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4 sm:mb-6">
-            <Waves className="w-4 h-4 text-cyan-400" />
-            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400">High-Intelligence Synthesis Hub</span>
+            <Waves className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+            <span className="text-[7px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400">High-Intelligence Synthesis Hub</span>
           </div>
-          <h2 className="text-3xl sm:text-6xl font-black text-white mb-4 sm:mb-6 tracking-tight italic uppercase">Engine <span className="text-cyan-500">Ocean</span></h2>
-          <p className="text-gray-500 max-w-2xl mx-auto text-xs sm:text-lg px-4 leading-relaxed italic">Definitive university-grade resolution with integrated neural visualizations.</p>
+          <h2 className="text-3xl sm:text-6xl font-black text-white mb-4 sm:mb-6 tracking-tight italic uppercase leading-none">Engine <span className="text-cyan-500">Ocean</span></h2>
+          <p className="text-gray-500 max-w-2xl mx-auto text-xs sm:text-lg leading-relaxed italic">Definitive university-grade resolution with integrated neural visualizations.</p>
         </div>
 
-        <div className="glass-panel p-5 sm:p-12 rounded-[1.5rem] sm:rounded-[3rem] border border-white/10 shadow-3xl">
+        <div className="glass-panel p-4 sm:p-10 md:p-12 rounded-[1.5rem] sm:rounded-[3rem] border border-white/10 shadow-3xl">
           <form onSubmit={handleSearch} className="space-y-6 sm:space-y-10">
             <div className="space-y-4">
               <div className="relative group">
-                <Search className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 h-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
+                <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 h-5 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
                 <input 
                   value={query} onChange={e => setQuery(e.target.value)}
                   placeholder="Query topic for definitive resolution..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-12 sm:px-16 py-4 sm:py-5 text-white outline-none focus:border-cyan-500/50 transition-all text-xs sm:text-lg"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-10 sm:px-16 py-4 sm:py-5 text-white outline-none focus:border-cyan-500/50 transition-all text-xs sm:text-lg"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-2">
-                <div className="flex items-start gap-3 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-2xl group hover:border-cyan-500/30 transition-all">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-1">
+                <div className="flex items-start gap-3 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded-xl sm:rounded-2xl group hover:border-cyan-500/30 transition-all">
                   <div className="p-2 bg-cyan-500/10 rounded-lg text-cyan-400 shrink-0"><Sparkles className="w-3.5 h-3.5" /></div>
                   <div>
                     <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1 italic">Syllabus Mode</p>
                     <p className="text-[8px] text-gray-500 leading-relaxed">Start with <span className="text-cyan-400 font-bold">&gt;</span> to generate an exhaustive degree roadmap (8 semesters for Univ).</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-2xl group hover:border-purple-500/30 transition-all">
+                <div className="flex items-start gap-3 p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl sm:rounded-2xl group hover:border-purple-500/30 transition-all">
                   <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400 shrink-0"><HelpCircle className="w-3.5 h-3.5" /></div>
                   <div>
                     <p className="text-[9px] font-black text-white uppercase tracking-widest mb-1 italic">Resolution Depth</p>
@@ -470,16 +529,16 @@ const EngineOcean: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
               <div className="space-y-2">
-                <label className="text-[8px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Academic Node</label>
+                <label className="text-[8px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center gap-2"><GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Academic Node</label>
                 <select value={grade} onChange={e => setGrade(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none cursor-pointer text-[10px] sm:text-xs">
                   {[...Array(12)].map((_, i) => <option key={i} value={i+1} className="bg-black">Grade {i+1}</option>)}
                   <option value="University" className="bg-black">University / Higher Ed</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[8px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center gap-2"><Target className="w-4 h-4" /> Resolution Depth</label>
+                <label className="text-[8px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center gap-2"><Target className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Resolution Depth</label>
                 <select value={marks} onChange={e => setMarks(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none cursor-pointer text-[10px] sm:text-xs">
                   <option value="5" className="bg-black">5 - Core Summary</option>
                   <option value="10" className="bg-black">10 - Advanced Analysis</option>
@@ -487,7 +546,7 @@ const EngineOcean: React.FC = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[8px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center gap-2"><Activity className="w-4 h-4" /> Intelligence Bias</label>
+                <label className="text-[8px] sm:text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center gap-2"><Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Intelligence Bias</label>
                 <select value={difficulty} onChange={e => setDifficulty(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none cursor-pointer text-[10px] sm:text-xs">
                   {DIFFICULTIES.map(d => <option key={d} value={d} className="bg-black">{d}</option>)}
                 </select>
@@ -508,27 +567,27 @@ const EngineOcean: React.FC = () => {
                 </div>
                 
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 w-full xl:w-auto">
-                  <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-3 py-2 rounded-lg sm:rounded-xl border border-white/10 shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-3 py-2 rounded-lg sm:rounded-xl border border-white/10 shrink-0 h-10">
                     <Globe className="w-3.5 h-3.5 text-gray-500" />
                     <select disabled={isTranslating} value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)} className="bg-transparent text-[8px] sm:text-[10px] font-black uppercase text-white outline-none cursor-pointer disabled:opacity-50">
                       {LANGUAGES.map(l => <option key={l.code} value={l.name} className="bg-black">{l.name}</option>)}
                     </select>
                   </div>
 
-                  <button onClick={initiateAudioSelector} disabled={isTranslating} className={`flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 min-w-[100px] ${audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-white/10 hover:bg-white/20 text-white disabled:opacity-50'}`}>
-                    {audioStatus === 'LOADING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    <span>{audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'Stop' : 'Listen'}</span>
+                  <button onClick={initiateAudioSelector} disabled={isTranslating} className={`flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 min-w-[100px] h-10 ${audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-white/10 hover:bg-white/20 text-white disabled:opacity-50 border border-white/10'}`}>
+                    {audioStatus === 'LOADING' || isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span>{isTranslating ? 'Translating...' : audioStatus === 'LOADING' ? 'Analyzing...' : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'Stop' : 'Listen'}</span>
                     {(audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && <AudioVisualizer />}
                   </button>
 
-                  <div className="flex items-center gap-2">
-                    <button onClick={handleBookmark} className={`p-2.5 rounded-lg sm:rounded-xl border transition-all active:scale-90 ${isBookmarked ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`} title="Bookmark result">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button onClick={handleBookmark} className={`flex-1 sm:flex-none p-2.5 rounded-lg sm:rounded-xl border transition-all active:scale-90 h-10 flex items-center justify-center ${isBookmarked ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`} title="Bookmark result">
                       <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
                     </button>
-                    <button onClick={handleDeepDive} disabled={deepDiveLoading || isTranslating} className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-cyan-500/30 transition-all active:scale-95 min-w-[100px] disabled:opacity-50">
+                    <button onClick={handleDeepDive} disabled={deepDiveLoading || isTranslating} className="flex-[2] sm:flex-none flex items-center justify-center gap-2.5 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-cyan-500/30 transition-all active:scale-95 min-w-[100px] h-10 disabled:opacity-50">
                       {deepDiveLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Microscope className="w-3.5 h-3.5" />} Deep Dive
                     </button>
-                    <button onClick={handleExportPDF} disabled={isExporting || isTranslating} className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2.5 bg-white text-black rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all flex items-center min-w-[100px] disabled:opacity-50">
+                    <button onClick={handleExportPDF} disabled={isExporting || isTranslating} className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-4 py-2 bg-white text-black rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all active:scale-95 h-10 min-w-[80px] disabled:opacity-50">
                       {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />} PDF
                     </button>
                   </div>
@@ -537,8 +596,8 @@ const EngineOcean: React.FC = () => {
 
               {/* Advanced Audio Controls Bar */}
               {showAudioControls && (
-                <div className="mb-8 bg-black/60 backdrop-blur-xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 animate-in slide-in-from-top-2 duration-300">
-                  <div className="flex flex-col gap-4">
+                <div className="mb-8 bg-black/60 backdrop-blur-xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-6 animate-in slide-in-from-top-2 duration-300">
+                  <div className="flex flex-col gap-5">
                     <div className="flex items-center gap-4">
                       <button onClick={togglePauseResume} className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white transition-all active:scale-90">
                         {audioStatus === 'PLAYING' ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
@@ -560,8 +619,8 @@ const EngineOcean: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-white/5">
-                      <div className="flex items-center gap-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/5">
+                      <div className="flex flex-wrap items-center gap-4 sm:gap-8">
                         <div className="flex items-center gap-3 group">
                           {audioVolume === 0 ? <VolumeX className="w-4 h-4 text-gray-500" /> : audioVolume < 0.5 ? <Volume1 className="w-4 h-4 text-gray-500" /> : <Volume2 className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />}
                           <input 
@@ -571,13 +630,13 @@ const EngineOcean: React.FC = () => {
                           />
                         </div>
                         <div className="flex items-center gap-3">
-                          <Gauge className="w-4 h-4 text-gray-500" />
-                          <div className="flex bg-white/5 p-1 rounded-lg gap-1">
+                          <Gauge className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600" />
+                          <div className="flex bg-white/5 p-0.5 sm:p-1 rounded-lg gap-0.5 sm:gap-1">
                             {PLAYBACK_SPEEDS.map(speed => (
                               <button 
                                 key={speed} 
                                 onClick={() => setAudioSpeed(speed)}
-                                className={`px-2 py-0.5 rounded text-[8px] sm:text-[9px] font-black transition-all ${audioSpeed === speed ? 'bg-cyan-500 text-black' : 'text-gray-500 hover:text-white'}`}
+                                className={`px-1.5 sm:px-2 py-0.5 rounded text-[7px] sm:text-[9px] font-black transition-all ${audioSpeed === speed ? 'bg-cyan-500 text-black' : 'text-gray-500 hover:text-white'}`}
                               >
                                 {speed}x
                               </button>
@@ -585,7 +644,7 @@ const EngineOcean: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <button onClick={() => { stopAudio(); setShowAudioControls(false); }} className="text-[8px] sm:text-[10px] font-black text-gray-600 hover:text-red-500 uppercase tracking-widest transition-colors">Terminate Stream</button>
+                      <button onClick={() => { stopAudio(); setShowAudioControls(false); }} className="text-[8px] sm:text-[10px] font-black text-gray-600 hover:text-red-500 uppercase tracking-widest transition-colors ml-auto sm:ml-0">Terminate Stream</button>
                     </div>
                   </div>
                 </div>
@@ -601,7 +660,7 @@ const EngineOcean: React.FC = () => {
                    </div>
                  )}
 
-                 <div className="space-y-3 sm:space-y-4">
+                 <div className="space-y-4">
                     <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-cyan-400 tracking-widest bg-cyan-400/10 w-fit px-3 py-1.5 rounded-lg border border-cyan-400/20"><User className="w-3.5 h-3.5" /> High-Resolution Briefing</div>
                     <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-gray-200 bg-white/5 p-5 sm:p-12 rounded-[1.2rem] sm:rounded-[2.5rem] border border-white/5 shadow-2xl overflow-x-hidden font-light min-h-[400px]">
                       {renderFormattedText(result.humanized)}
@@ -619,7 +678,7 @@ const EngineOcean: React.FC = () => {
                     </div>
                  </div>
 
-                 <div className="space-y-3 sm:space-y-4">
+                 <div className="space-y-4">
                     <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-purple-400 tracking-widest bg-purple-400/10 w-fit px-3 py-1.5 rounded-lg border border-purple-400/20"><Bot className="w-3.5 h-3.5" /> Engine Metadata</div>
                     <div className="prose prose-invert prose-xs sm:prose-sm max-w-none text-gray-500 bg-purple-500/5 p-5 sm:p-8 rounded-[1.2rem] sm:rounded-[2rem] border border-purple-500/10 leading-relaxed italic overflow-x-hidden break-words">
                       {result.summary}

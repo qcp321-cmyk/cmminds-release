@@ -34,6 +34,7 @@ async function decodeAudioData(
   sampleRate: number,
   numChannels: number,
 ): Promise<AudioBuffer> {
+  // Ensure we are handling raw 16-bit PCM correctly
   const dataInt16 = new Int16Array(
     data.buffer,
     data.byteOffset,
@@ -46,6 +47,7 @@ async function decodeAudioData(
   for (let channel = 0; channel < numChannels; channel++) {
     const channelData = buffer.getChannelData(channel);
     for (let i = 0; i < frameCount; i++) {
+      // Normalize Int16 to Float32 range [-1.0, 1.0]
       channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
     }
   }
@@ -208,13 +210,15 @@ export const generateSpeech = async (text: string, targetLanguage: string = 'Eng
   
   const ai = getAI();
   try {
+    // 500 errors can happen if the text is too long or has problematic formatting
     const safeText = text
       .replace(/[*#_~`>\[\]\(\)\/\\|]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
-      .substring(0, 5000); 
+      .substring(0, 2500); // Reduced length for stability
     
-    const prompt = `Speak the following clearly in ${targetLanguage}: ${safeText}`;
+    // Using a clear command style as per examples
+    const prompt = `Please read the following text in ${targetLanguage}: ${safeText}`;
 
     const response = await ai.models.generateContent({
       model: SPEECH_MODEL,
