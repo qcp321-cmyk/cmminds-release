@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, Waves, Volume2, Loader2, Sparkles, BookOpen, GraduationCap, Target, ExternalLink, FileDown, Globe, Play, Pause, Square, User, Bot, Microscope, Activity, Gauge, Headphones, X, CheckCircle2, Bookmark, ImageIcon, Info, HelpCircle, Volume1, VolumeX } from 'lucide-react';
+import { Search, Waves, Volume2, Loader2, Sparkles, BookOpen, GraduationCap, Target, ExternalLink, FileDown, Globe, Play, Pause, Square, User, Bot, Microscope, Activity, Gauge, Headphones, X, CheckCircle2, Bookmark, ImageIcon, Info, HelpCircle, Volume1, VolumeX, Share2, Link, ShieldCheck } from 'lucide-react';
 import { engineOceanQuery, generateSpeech, deepDiveQuery, generateFounderRemark, translateEngineResult, generateMissionImage, generateQuickRecap } from '../services/geminiService';
 import { jsPDF } from 'jspdf';
 import { mockBackend } from '../services/mockBackend';
@@ -40,9 +40,6 @@ const EngineOcean: React.FC = () => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [result, setResult] = useState<{ humanized: string, summary: string, grounding: any[], deepDive?: string, imageUrl?: string } | null>(null);
   
-  // Storage for original results to ensure high-quality translations
-  const originalResultRef = useRef<{ humanized: string, summary: string, deepDive?: string } | null>(null);
-
   // Advanced Audio State
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('IDLE');
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
@@ -55,8 +52,10 @@ const EngineOcean: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [showAudioSelector, setShowAudioSelector] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
 
   const currentUser = mockBackend.getCurrentUser();
+  const originalResultRef = useRef<any>(null);
 
   // Audio Playback Refs
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -77,49 +76,45 @@ const EngineOcean: React.FC = () => {
     };
   }, []);
 
-  // Fix: Unified Language Change Effect (Translates text AND restarts audio)
+  // REAL-TIME LANGUAGE SWITCH FOR TEXT CONTENT
   useEffect(() => {
-    if (!result || !originalResultRef.current) return;
+    const handleTranslation = async () => {
+      if (!result || !originalResultRef.current) return;
 
-    const syncLanguage = async () => {
-        // Stop current audio
-        stopAudio();
-
-        if (selectedLanguage === 'English') {
-            setResult(prev => prev ? { 
-                ...prev, 
-                humanized: originalResultRef.current!.humanized,
-                summary: originalResultRef.current!.summary,
-                deepDive: originalResultRef.current!.deepDive
-            } : null);
-            return;
+      if (selectedLanguage === 'English') {
+        setResult(originalResultRef.current);
+        if ((audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && activeAudioChoice) {
+          stopAudio();
+          handleSpeak(activeAudioChoice);
         }
+        return;
+      }
 
-        setIsTranslating(true);
-        try {
-            const translated = await translateEngineResult(
-                originalResultRef.current!.humanized,
-                originalResultRef.current!.summary,
-                selectedLanguage,
-                originalResultRef.current!.deepDive
-            );
-            setResult(prev => prev ? { ...prev, ...translated } : null);
-        } catch (e) {
-            console.error("Translation error:", e);
-        } finally {
-            setIsTranslating(false);
+      setIsTranslating(true);
+      try {
+        const translated = await translateEngineResult(
+          originalResultRef.current.humanized,
+          originalResultRef.current.summary,
+          selectedLanguage,
+          originalResultRef.current.deepDive
+        );
+        
+        setResult(prev => prev ? { ...prev, ...translated } : null);
+        
+        // Auto-restart audio with new language if currently active
+        if ((audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && activeAudioChoice) {
+          stopAudio();
+          handleSpeak(activeAudioChoice);
         }
+      } catch (e) {
+        console.error("Translation switch failed", e);
+      } finally {
+        setIsTranslating(false);
+      }
     };
 
-    syncLanguage();
+    handleTranslation();
   }, [selectedLanguage]);
-
-  // Restart audio once translation/result is updated
-  useEffect(() => {
-    if (activeAudioChoice && result && !isTranslating && !loading) {
-        handleSpeak(activeAudioChoice);
-    }
-  }, [result, isTranslating]);
 
   useEffect(() => {
     if (gainNodeRef.current && audioCtxRef.current) {
@@ -227,6 +222,29 @@ const EngineOcean: React.FC = () => {
     });
   };
 
+  const handleShare = async (encrypted: boolean) => {
+    if (!result) return;
+    setShowShareMenu(false);
+    try {
+      const shareData = {
+        query: query,
+        humanized: result.humanized,
+        summary: result.summary,
+        deepDive: result.deepDive,
+        type: 'OCEAN_SYNTHESIS'
+      };
+      const payload = JSON.stringify(shareData);
+      const encoded = btoa(encodeURIComponent(payload).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16))));
+      const url = new URL(window.location.href);
+      url.searchParams.set('ocean', encoded);
+      if (encrypted) url.searchParams.set('vault', 'true');
+      await navigator.clipboard.writeText(url.toString());
+      alert(`${encrypted ? 'Secure' : 'Public'} synthesis link copied to clipboard.`);
+    } catch (e) {
+      alert("Sharing protocol failed.");
+    }
+  };
+
   const isBookmarked = currentUser?.bookmarks?.some(b => b.title === query && b.type === 'OCEAN');
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -256,10 +274,10 @@ const EngineOcean: React.FC = () => {
 
     setLoading(true);
     setResult(null);
-    setSelectedLanguage('English'); // Reset language on new search
     stopAudio();
     setShowAudioControls(false);
     setActiveAudioChoice(null);
+    setSelectedLanguage('English');
     
     mockBackend.trackEvent(userId, 'FORM_SUBMISSION', 'Engine Ocean inquiry', { query: processedQuery, grade, marks: currentMarks, difficulty, isSyllabusMode });
 
@@ -271,8 +289,9 @@ const EngineOcean: React.FC = () => {
 
       const finalResult = { ...data, imageUrl };
       setResult(finalResult);
-      originalResultRef.current = { humanized: data.humanized, summary: data.summary, deepDive: data.deepDive };
+      originalResultRef.current = finalResult;
       
+      // Store in session history for memory-based recaps
       sessionHistoryRef.current.push({ query: processedQuery, summary: data.summary });
 
       mockBackend.incrementUsage(userId, 'OCEAN');
@@ -292,8 +311,9 @@ const EngineOcean: React.FC = () => {
     setDeepDiveLoading(true);
     try {
       const dd = await deepDiveQuery(query, result.humanized);
-      setResult(prev => prev ? { ...prev, deepDive: dd } : null);
-      if (originalResultRef.current) originalResultRef.current.deepDive = dd;
+      const updated = { ...result, deepDive: dd };
+      setResult(updated);
+      originalResultRef.current = updated;
     } catch (e) { alert("Neural expansion failed."); } finally { setDeepDiveLoading(false); }
   };
 
@@ -322,7 +342,7 @@ const EngineOcean: React.FC = () => {
       let mainText = "";
       if (choice === 'HUMANIZED') mainText = result.humanized;
       else if (choice === 'DEEP_DIVE') mainText = result.deepDive || "";
-      else if (choice === 'BOTH') mainText = `${result.humanized}. ${result.deepDive || ''}. ${result.summary}`;
+      else if (choice === 'BOTH') mainText = `Full Synthesis Session. ${result.humanized}. Nexus Deep Dive: ${result.deepDive || ''}. Learning Summary: ${result.summary}`;
 
       const relatedPastQuery = sessionHistoryRef.current.find(item => 
         item.query !== query && 
@@ -338,16 +358,17 @@ const EngineOcean: React.FC = () => {
       const buffer = await generateSpeech(finalAudioText, selectedLanguage);
       if (buffer) {
         if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
-        
         audioBufferRef.current = buffer;
         setAudioDuration(buffer.duration);
         setShowAudioControls(true);
         startAudioNode(buffer, 0);
       } else {
         setAudioStatus('IDLE');
+        alert("Audio synthesis failed.");
       }
     } catch (e) {
       setAudioStatus('IDLE');
+      console.error("Playback Initiation Error:", e);
     }
   };
 
@@ -425,64 +446,68 @@ const EngineOcean: React.FC = () => {
       };
 
       const drawHeader = () => {
-        doc.setFillColor(10, 15, 20); doc.rect(0, 0, pageWidth, 45, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.text('CuriousMinds', margin, 20);
-        doc.setTextColor(34, 211, 238); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-        doc.text('ENGINE OCEAN UPLINK // ARCHITECTURAL SYNTHESIS', margin, 28);
-        doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.4); doc.line(margin, 32, margin + 45, 32);
-        currentY = 60;
+        doc.setFillColor(10, 15, 20); doc.rect(0, 0, pageWidth, 50, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(26); doc.text('CuriousMinds', margin, 22);
+        doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+        doc.text(`ENGINE OCEAN UPLINK // GRADE ${grade} // ${selectedLanguage.toUpperCase()}`, margin, 30);
+        doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.5); doc.line(margin, 34, margin + 40, 34);
+        currentY = 65;
       };
 
       const drawFooter = () => {
-        doc.setFontSize(7); doc.setTextColor(160, 160, 160);
-        doc.text(`© 2025 CURIOUSMINDS INC. // NODE REF: ${Math.random().toString(36).substring(7).toUpperCase()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+          doc.text(`Page ${i} of ${pageCount} // © 2025 CURIOUSMINDS INC.`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
       };
 
-      drawHeader(); drawFooter();
+      drawHeader();
       
       // Title
-      doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
       const titleLines = doc.splitTextToSize(query.toUpperCase(), contentWidth);
-      doc.text(titleLines, margin, currentY); currentY += (titleLines.length * 8) + 8;
+      doc.text(titleLines, margin, currentY); currentY += (titleLines.length * 8) + 10;
 
-      // Body Content
-      const sections = result.humanized.split('\n');
-      doc.setFontSize(10);
-      
-      sections.forEach(section => {
-        const cleaned = section.replace(/[*#_~`>\[\]\(\)\/\\]/g, '').trim();
-        if (!cleaned) return;
-
-        const isH = cleaned.match(/^[A-Z\s:]{4,40}$/);
-        if (isH) {
-           checkNewPage(15);
-           currentY += 5;
-           doc.setTextColor(34, 211, 238); doc.setFont('helvetica', 'bold');
-           doc.text(cleaned, margin, currentY);
-           currentY += 8;
-           doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal');
-        } else {
-           const lines = doc.splitTextToSize(cleaned, contentWidth);
-           lines.forEach((line: string) => {
-             checkNewPage(6);
-             doc.text(line, margin, currentY);
-             currentY += 6;
-           });
-           currentY += 2;
-        }
+      // Cleaned Humanized text
+      doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      const fullText = result.humanized.replace(/[*#_~`>\[\]\(\)\/\\]/g, '');
+      const briefingLines = doc.splitTextToSize(fullText, contentWidth);
+      briefingLines.forEach((line: string) => {
+        if (checkNewPage(6)) doc.setTextColor(60, 60, 60);
+        doc.text(line, margin, currentY); currentY += 6;
       });
 
-      // Insight
-      currentY += 10; checkNewPage(45);
-      doc.setFillColor(15, 20, 25); doc.roundedRect(margin - 4, currentY, contentWidth + 8, 30, 2, 2, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text('FOUNDER\'S SYNTHESIS', margin, currentY + 10);
-      doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'italic');
-      const quoteLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth);
-      doc.text(quoteLines, margin, currentY + 18);
+      // Deep Dive if exists
+      if (result.deepDive) {
+        currentY += 10;
+        checkNewPage(20);
+        doc.setTextColor(34, 211, 238); doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+        doc.text('TECHNICAL NEXUS EXPANSION', margin, currentY); currentY += 8;
+        doc.setTextColor(80, 80, 80); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+        const ddLines = doc.splitTextToSize(result.deepDive.replace(/[*#_~`>\[\]\(\)\/\\]/g, ''), contentWidth);
+        ddLines.forEach((line: string) => {
+          if (checkNewPage(5)) doc.setTextColor(80, 80, 80);
+          doc.text(line, margin, currentY); currentY += 5;
+        });
+      }
 
-      doc.save(`CuriousMinds_Synthesis_${query.replace(/\s+/g, '_').substring(0, 30)}.pdf`);
-    } catch (e) { alert("PDF export failed."); } finally { setIsExporting(false); }
+      // Founder Remark
+      currentY += 15; checkNewPage(40);
+      doc.setFillColor(10, 15, 20); doc.roundedRect(margin - 5, currentY, contentWidth + 10, 35, 3, 3, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text('FOUNDER\'S PERSPECTIVE', margin + 5, currentY + 12);
+      doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'italic');
+      const quoteLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth - 10);
+      doc.text(quoteLines, margin + 5, currentY + 20);
+
+      drawFooter();
+      doc.save(`CuriousMinds_Ocean_${query.replace(/\s+/g, '_').substring(0, 20)}.pdf`);
+    } catch (e) { 
+      console.error(e);
+      alert("PDF generation failed."); 
+    } finally { setIsExporting(false); }
   };
 
   return (
@@ -575,8 +600,8 @@ const EngineOcean: React.FC = () => {
                   </div>
 
                   <button onClick={initiateAudioSelector} disabled={isTranslating} className={`flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-5 py-2 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase transition-all shadow-xl active:scale-95 min-w-[100px] h-10 ${audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-white/10 hover:bg-white/20 text-white disabled:opacity-50 border border-white/10'}`}>
-                    {audioStatus === 'LOADING' || isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
-                    <span>{isTranslating ? 'Translating...' : audioStatus === 'LOADING' ? 'Analyzing...' : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'Stop' : 'Listen'}</span>
+                    {audioStatus === 'LOADING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? <Square className="w-2.5 h-2.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    <span>{audioStatus === 'LOADING' ? 'Analyzing...' : audioStatus === 'PLAYING' || audioStatus === 'PAUSED' ? 'Stop' : 'Listen'}</span>
                     {(audioStatus === 'PLAYING' || audioStatus === 'PAUSED') && <AudioVisualizer />}
                   </button>
 
@@ -584,10 +609,27 @@ const EngineOcean: React.FC = () => {
                     <button onClick={handleBookmark} className={`flex-1 sm:flex-none p-2.5 rounded-lg sm:rounded-xl border transition-all active:scale-90 h-10 flex items-center justify-center ${isBookmarked ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`} title="Bookmark result">
                       <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
                     </button>
+                    
+                    <div className="relative group/share flex-1 sm:flex-none">
+                      <button onClick={() => setShowShareMenu(!showShareMenu)} className="w-full h-10 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all shadow-xl active:scale-95">
+                        <Share2 className="w-3.5 h-3.5" /> Share
+                      </button>
+                      {showShareMenu && (
+                        <div className="absolute bottom-full right-0 mb-3 w-40 bg-black border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 z-[100]">
+                          <button onClick={() => handleShare(false)} className="w-full p-3.5 flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-gray-400 hover:text-cyan-400 hover:bg-white/5 transition-all text-left">
+                            <Link className="w-3 h-3" /> Public link
+                          </button>
+                          <button onClick={() => handleShare(true)} className="w-full p-3.5 flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-gray-400 hover:text-purple-400 hover:bg-white/5 transition-all text-left border-t border-white/5">
+                            <ShieldCheck className="w-3 h-3" /> Secure vault
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <button onClick={handleDeepDive} disabled={deepDiveLoading || isTranslating} className="flex-[2] sm:flex-none flex items-center justify-center gap-2.5 px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest border border-cyan-500/30 transition-all active:scale-95 min-w-[100px] h-10 disabled:opacity-50">
                       {deepDiveLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Microscope className="w-3.5 h-3.5" />} Deep Dive
                     </button>
-                    <button onClick={handleExportPDF} disabled={isExporting || isTranslating} className="flex-1 sm:flex-none flex items-center justify-center gap-2.5 px-4 py-2 bg-white text-black rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all active:scale-95 h-10 min-w-[80px] disabled:opacity-50">
+                    <button onClick={handleExportPDF} disabled={isExporting || isTranslating} className="flex-1 sm:flex-none h-10 flex items-center justify-center gap-2 px-4 sm:px-6 py-2 bg-white text-black rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all active:scale-95 h-10 min-w-[80px] disabled:opacity-50">
                       {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />} PDF
                     </button>
                   </div>

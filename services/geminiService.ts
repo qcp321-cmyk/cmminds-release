@@ -210,14 +210,13 @@ export const generateSpeech = async (text: string, targetLanguage: string = 'Eng
   
   const ai = getAI();
   try {
-    // 500 errors can happen if the text is too long or has problematic formatting
+    // Clean text and handle character limit
     const safeText = text
       .replace(/[*#_~`>\[\]\(\)\/\\|]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
-      .substring(0, 2500); // Reduced length for stability
+      .substring(0, 5000); // Increased to 5000 for complete coverage
     
-    // Using a clear command style as per examples
     const prompt = `Please read the following text in ${targetLanguage}: ${safeText}`;
 
     const response = await ai.models.generateContent({

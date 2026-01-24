@@ -186,7 +186,6 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
 
   useEffect(() => {
     if (audioStatus === 'PLAYING') {
-      // Reload speech if language changes
       stopAudio();
       handleSpeakMission();
     }
@@ -239,7 +238,6 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
   const startAudioNode = (offset: number) => {
     if (!audioBufferRef.current || !audioCtxRef.current) return;
     
-    // Stop existing
     if (audioSourceRef.current) {
       try { audioSourceRef.current.stop(); } catch(e){}
     }
@@ -282,7 +280,6 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
       if (audioSourceRef.current) {
         try { audioSourceRef.current.stop(); } catch(e){}
       }
-      // Store accurate offset
       const elapsed = (audioCtxRef.current!.currentTime - startTimeRef.current) * audioSpeed;
       offsetRef.current = offsetRef.current + elapsed;
       setAudioStatus('PAUSED');
@@ -353,71 +350,79 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
       const contentWidth = pageWidth - (margin * 2);
       let currentY = 0;
 
-      const checkNewPage = (neededHeight: number) => {
-        if (currentY + neededHeight > pageHeight - margin) {
+      const drawHeader = () => {
+          doc.setFillColor(10, 15, 20); doc.rect(0, 0, pageWidth, 55, 'F');
+          doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(28); doc.text('CuriousMinds', margin, 30);
+          doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(34, 211, 238); 
+          doc.text(`SYNTHESIS NODE // GRADE ${grade} // ${difficulty.toUpperCase()}`, margin, 42);
+          doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.5); doc.line(margin, 46, margin + 40, 46);
+          currentY = 70;
+      };
+      
+      const drawFooter = () => {
+          const pageCount = (doc as any).internal.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(180, 180, 180);
+            doc.text(`Page ${i} of ${pageCount} // © 2025 CURIOUSMINDS INC.`, pageWidth / 2, pageHeight - 12, { align: 'center' });
+          }
+      };
+
+      const checkNewPage = (needed: number) => {
+        if (currentY + needed > pageHeight - 20) {
           doc.addPage();
-          currentY = margin;
           drawHeader();
           return true;
         }
         return false;
       };
 
-      const drawHeader = () => {
-          doc.setFillColor(15, 23, 42); doc.rect(0, 0, pageWidth, 45, 'F');
-          doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(24); doc.text('CuriousMinds', margin, 20);
-          doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(34, 211, 238); 
-          doc.text(`SYNTHESIS NODE // COGNITIVE MAPPING // GRADE ${grade}`, margin, 28);
-          doc.setDrawColor(34, 211, 238); doc.setLineWidth(0.4); doc.line(margin, 32, margin + 45, 32);
-          currentY = 60;
-      };
-      
-      const drawFooter = () => {
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(150, 150, 150);
-          doc.text('© 2025 CURIOUSMINDS INC. // PROPRIETARY SYNTHESIS ARCHITECTURE', pageWidth / 2, pageHeight - 10, { align: 'center' });
-      };
+      drawHeader();
 
-      drawHeader(); drawFooter();
+      // Role
+      doc.setTextColor(34, 211, 238); doc.setFontSize(16); doc.setFont('helvetica', 'bold'); 
+      const roleLines = doc.splitTextToSize(data.role.toUpperCase(), contentWidth);
+      doc.text(roleLines, margin, currentY); currentY += (roleLines.length * 8) + 5;
 
-      // Identity Header
-      doc.setTextColor(34, 211, 238); doc.setFontSize(14); doc.setFont('helvetica', 'bold'); 
-      doc.text(data.role.toUpperCase(), margin, currentY); currentY += 10;
-
-      // Primary Explanation
-      doc.setTextColor(50, 50, 50); doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-      const sText = doc.splitTextToSize(data.explanation, contentWidth); 
+      // Explanation
+      doc.setTextColor(60, 60, 60); doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+      const sText = doc.splitTextToSize(data.explanation.replace(/[*#_~`>\[\]\(\)\/\\]/g, ''), contentWidth); 
       sText.forEach((line: string) => {
-          checkNewPage(6);
-          doc.text(line, margin, currentY);
-          currentY += 6;
+        if (checkNewPage(6)) doc.setTextColor(60, 60, 60);
+        doc.text(line, margin, currentY); currentY += 6;
       });
-      currentY += 8;
 
-      // Steps Section
+      // Roadmap Header
+      currentY += 10;
       checkNewPage(20);
-      doc.setTextColor(120, 120, 120); doc.setFontSize(11); doc.setFont('helvetica', 'bold');
-      doc.text('OPERATIONAL ROADMAP', margin, currentY); currentY += 8;
+      doc.setTextColor(100, 100, 100); doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text('MISSION STEPS', margin, currentY); currentY += 10;
 
+      // Steps
       data.steps.forEach((step, i) => {
           checkNewPage(12);
-          doc.setFillColor(248, 250, 252); doc.roundedRect(margin - 2, currentY - 4, contentWidth + 4, 10, 1, 1, 'F');
-          doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.text(`${i+1}`, margin + 1, currentY + 2);
-          doc.setTextColor(40, 44, 52); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-          doc.text(step, margin + 10, currentY + 2); 
-          currentY += 12;
+          doc.setFillColor(245, 245, 245); doc.roundedRect(margin - 2, currentY - 4, contentWidth + 4, 10, 1, 1, 'F');
+          doc.setTextColor(34, 211, 238); doc.setFontSize(10); doc.text(`${i+1}`, margin + 1, currentY + 3);
+          doc.setTextColor(40, 40, 40); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+          doc.text(step.replace(/[*#_~`>\[\]\(\)\/\\]/g, ''), margin + 8, currentY + 3); currentY += 12;
       });
 
-      // Insight
-      currentY += 10; checkNewPage(40);
-      doc.setFillColor(15, 23, 42); doc.roundedRect(margin - 4, currentY, contentWidth + 8, 28, 2, 2, 'F');
+      // Founder Insight Section
+      currentY += 10;
+      checkNewPage(45);
+      doc.setFillColor(10, 15, 20); doc.roundedRect(margin - 5, currentY, contentWidth + 10, 35, 3, 3, 'F');
       doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-      doc.text('THE ARCHITECT\'S INSIGHT', margin, currentY + 10);
+      doc.text('FOUNDER\'S INSIGHT', margin + 5, currentY + 12);
       doc.setTextColor(34, 211, 238); doc.setFontSize(9); doc.setFont('helvetica', 'italic');
-      const remarkLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth);
-      doc.text(remarkLines, margin, currentY + 18);
+      const remarkLines = doc.splitTextToSize(`"${founderInsight.remark}"`, contentWidth - 10);
+      doc.text(remarkLines, margin + 5, currentY + 20);
 
-      doc.save(`CuriousMinds_Synthesis_${data.role.replace(/\s+/g, '_')}.pdf`);
-    } catch (e) { alert("Export failed."); } finally { setIsExporting(false); }
+      drawFooter();
+      doc.save(`CuriousMinds_Synthesis_${data.role.replace(/\s+/g, '_').substring(0, 20)}.pdf`);
+    } catch (e) { 
+      console.error(e);
+      alert("Export failed."); 
+    } finally { setIsExporting(false); }
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -435,7 +440,6 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
         mockBackend.incrementUsage(currentUser.id, 'SCENARIO');
         window.dispatchEvent(new CustomEvent('trigger-demo-booking'));
         
-        // Use global Lenis for programmatic scrolling
         const lenis = (window as any).lenis;
         if (lenis && resultRef.current) {
           lenis.scrollTo(resultRef.current, { offset: -50 });
@@ -594,7 +598,7 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                           <span className="text-[9px] sm:text-xs font-bold uppercase tracking-tight sm:tracking-[0.2em]">Synthesis Complete</span>
                           <span className="text-[8px] sm:text-[9px] bg-cyan-400 text-black px-1.5 py-0.5 rounded font-black">{data.difficulty}</span>
                       </div>
-                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 w-full xl:w-auto">
+                      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 w-full xl:w-auto">
                         <div className="flex items-center gap-1.5 sm:gap-2 bg-white/5 px-3 py-2 rounded-lg sm:rounded-xl border border-white/10 shrink-0 h-10">
                           <Globe className="w-3 h-3 text-cyan-500" />
                           <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)} className="bg-transparent text-[8px] sm:text-[10px] font-black uppercase text-white outline-none cursor-pointer">
@@ -756,8 +760,8 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
               )}
             </div>
           ) : (
-             // beYOU components stay the same as per prompt
-             beYouStep === 'DETAILS' ? (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+              {beYouStep === 'DETAILS' && (
                 <form onSubmit={startBeYouAssessment} className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <input required className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl px-5 py-3.5 sm:py-4 text-white outline-none text-xs sm:text-sm placeholder:text-gray-600 focus:border-purple-500/50" placeholder="Name" value={userDetails.name} onChange={e => setUserDetails({...userDetails, name: e.target.value})} />
@@ -769,7 +773,9 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Initialize Success Prediction</>}
                   </button>
                 </form>
-              ) : beYouStep === 'ASSESSMENT' ? (
+              )}
+
+              {beYouStep === 'ASSESSMENT' && (
                 <div className="space-y-6 sm:space-y-8 py-4 sm:py-10">
                    <div className="text-center">
                       <p className="text-[8px] sm:text-[10px] font-black text-purple-400 uppercase tracking-[0.3em] mb-3 sm:mb-4">Phase {currentQuestionIndex + 1} of 5</p>
@@ -780,11 +786,12 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                       {currentQuestionIndex === 4 ? 'Predict My Success' : 'Next Synapse'} <ArrowRight className="w-4 h-4" />
                    </button>
                 </div>
-              ) : beYouStep === 'GENERATING' ? (
-                <ProgressSynapse input={userDetails.goal} themeColor="#a855f7" />
-              ) : personaData && (
+              )}
+
+              {beYouStep === 'GENERATING' && <ProgressSynapse input={userDetails.goal} themeColor="#a855f7" />}
+
+              {beYouStep === 'RESULT' && personaData && (
                 <div className="min-h-[550px] h-[75vh] md:h-[650px] flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
-                   {/* beYOU result view stays same */}
                    <div className="w-full md:w-64 lg:w-80 bg-white/5 border border-white/10 rounded-[1.2rem] sm:rounded-[2.5rem] p-4 flex flex-col shrink-0">
                       <div className="flex items-center gap-3 mb-4 sm:mb-8 bg-purple-600/10 p-3 rounded-xl border border-purple-500/20">
                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shrink-0"><UserCircle2 className="w-5 h-5 sm:w-6 h-6 text-white" /></div>
@@ -837,7 +844,8 @@ const ScenarioGenerator: React.FC<ScenarioGeneratorProps> = ({ currentUser, onRe
                       )}
                    </div>
                 </div>
-              )
+              )}
+            </div>
           )}
         </div>
       </div>

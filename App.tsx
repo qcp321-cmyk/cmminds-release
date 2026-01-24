@@ -25,7 +25,8 @@ import {
   Trash2,
   ExternalLink,
   Calendar,
-  Calculator
+  Calculator,
+  Microscope
 } from 'lucide-react';
 import ThreeBackground from './components/ThreeBackground';
 import ScenarioGenerator from './components/ScenarioGenerator';
@@ -180,9 +181,19 @@ const SharedViewer = ({ payload, onClose }: { payload: any, onClose: () => void 
                                         <Bot className="w-3 h-3" /> Response Stream
                                     </div>
                                     <h3 className="text-xl sm:text-3xl md:text-4xl font-black text-white italic leading-tight">{payload.query}</h3>
-                                    <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-gray-300 font-light leading-relaxed bg-white/5 p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-sm sm:text-lg">
-                                        {payload.humanized?.split('\n').map((p: string, i: number) => <p key={i} className="mb-3 sm:mb-4">{p}</p>)}
+                                    <div className="prose prose-invert prose-sm sm:prose-lg max-w-none text-gray-200 bg-white/5 p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-sm sm:text-lg font-light border border-white/5 leading-relaxed">
+                                        {payload.humanized?.split('\n').map((p: string, i: number) => <p key={i} className="mb-3 sm:mb-4">{p.replace(/[*#_~`>\[\]\(\)\/\\]/g, '')}</p>)}
                                     </div>
+                                    {payload.deepDive && (
+                                        <div className="mt-8 space-y-4">
+                                            <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-black uppercase text-cyan-400 tracking-widest bg-cyan-400/10 w-fit px-3 py-1.5 rounded-lg border border-cyan-400/20">
+                                                <Microscope className="w-3 h-3" /> Nexus Deep Dive
+                                            </div>
+                                            <div className="bg-cyan-500/5 border border-cyan-500/10 p-5 sm:p-8 rounded-[1.5rem] text-gray-400 text-sm sm:text-lg font-light leading-relaxed italic border-l-4 border-cyan-600">
+                                                {payload.deepDive}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 {payload.summary && (
                                     <div className="space-y-3 sm:space-y-4">
